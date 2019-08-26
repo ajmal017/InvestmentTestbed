@@ -3,13 +3,15 @@
 import os
 import sys
 import warnings
+import time
 import re
-import timeit
+
 from datetime import datetime
 from datetime import timedelta
 from datetime import date
 import pandas as pd
 import numpy as np
+import multiprocessing as mp
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 warnings.filterwarnings("ignore")
@@ -23,22 +25,17 @@ from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 from dateutil.relativedelta import relativedelta
 '''
-
+MULTI_PROCESS = False
 
 
 # Wrap운용팀 DB Connect
 db = DB_Util.DB()
 db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", password="ryumaria")
 
-calendar_map = {'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6, 'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
-              , 'Q1': 1, 'Q2': 2, 'Q3': 3, 'Q4': 4}
-
 # 등록된 Economic Event 리스트의 데이터를 크롤링
 # Economic Event 리스트는 investing.com의 Economic Calendar에서 수집 후 엑셀 작업으로 DB에 insert
 # 미국, 중국, 한국의 모든 이벤트
-if 1:
-    startTime = timeit.default_timer()
-
+if 0:
     # Economic Event 리스트 select
     datas = db.select_query("SELECT cd, nm_us, link, ctry, period"
                             "  FROM economic_events"
@@ -46,89 +43,38 @@ if 1:
     datas.columns = ['cd', 'nm_us', 'link', 'ctry', 'period']
     # print(type(datas))
 
-    # chromedriver를 이용하여 session 연결
-    session = Investing.InvestingEconomicEventCalendar()
+    # 병렬처리 개발중
+    if MULTI_PROCESS == True:
+        max_process_num = 2
+        jobs = []
 
-    for data in datas.iterrows():
-        cd = data[1]['cd']
-        nm = data[1]['nm_us']
-        link = data[1]['link']
-        ctry = data[1]['ctry']
-        period = data[1]['period']
+        # 병렬처리를 위해 datas를 datas_split array로 분할
+        unit_size = int(len(datas)/max_process_num)+1
+        for i in range(max_process_num):
+            sub_datas = datas[i*unit_size:min((i+1)*unit_size,len(datas))]
+            print(i*unit_size,min((i+1)*unit_size,len(datas)))
 
-        # 배치가 중간에 중단된 경우 문제가 발생한 Event 이후부터 시작
-        if cd < 0:
-            # if cd not in (81,228,303,331,461,484,569,596,868,889,914,1037,1038,1040,1315,1468,1524,1526,1533,1534,1548,1571,1581,1650,1746,1747,1748,1751,1755,1762,1763,1765,1771,1772,1777,1793,1801,1810,1811,1812,1813,1820,1821,1878,1887,1913):
-            print('continue: ', nm, link)
-            continue
+            # chromedriver를 이용하여 session 연결
+            session = Investing.InvestingEconomicEventCalendar(sub_datas, db)
+            p = mp.Process(target=Investing.CrawlingStart, args=(session,))
+            jobs.append(p)
+            p.start()
 
-        # Event별 Schedule 리스트 크롤링
-        cralwing_nm, results = session.GetEventSchedule(link, cd, 0.2)
-        print(cd, nm, cralwing_nm, link, len(results))
+            time.sleep(90)
 
-        # 크롤링된 Event 이름으로 변경
-        if nm != cralwing_nm:
-            sql = "UPDATE economic_events" \
-                  "   SET nm_us='%s'" \
-                  " WHERE cd=%s"
-            sql_arg = (cralwing_nm, cd)
+        # Iterate through the list of jobs and remove one that are finished, checking every second.
+        count_loop = 0
+        while len(jobs) > 0:
+            jobs = [job for job in jobs if job.is_alive()]
+            print("%s: %s Process Left" % (count_loop, len(jobs)))
+            time.sleep(10)
 
-            if (db.execute_query(sql, sql_arg) == False):
-                # print(sql % sql_arg) # insert 에러 메세지를 보여준다.
-                pass
-        # print(results)
+            count_loop += 1
+    else:
+        session = Investing.InvestingEconomicEventCalendar(datas, db)
+        session.Start()
 
-        pre_statistics_time = 0
-        # 시계역 역순(가장 최근 데이터가 처음)
-        for cnt, result in enumerate(results):
-            try:
-                date_rlt = result['date']
-                date_splits = re.split('\W+', date_rlt)
-                date_str = str(date(int(date_splits[2]), calendar_map[date_splits[0]], int(date_splits[1])))
 
-                # 통계시점에 대한 정보가 없는 경우 주기가 monthly인 경우 처리
-                statistics_time = 'NULL' if len(date_splits) <= 3 or date_splits[3] not in calendar_map.keys() else \
-                calendar_map[date_splits[3]]
-                if period == 'M':
-                    # 첫 데이터인 경우 이전달의 값을 역으로 추정
-                    if pre_statistics_time == 0:
-                        pre_statistics_time = statistics_time + 1 if statistics_time < 12 else 1
-
-                    # 통계시점에 대한 정보가 없는 경우에 이전 데이터에 대한 정보를 사용해서 추정
-                    if statistics_time == 'NULL':
-                        statistics_time = pre_statistics_time - 1 if pre_statistics_time > 1 else 12
-
-                    pre_statistics_time = statistics_time
-
-                time = result['time']
-                # GDP처럼 추정치가 먼저 발표되는 경우
-                pre_release_yn = result['pre_release_yn']
-
-                bold = result['bold']
-                fore = result['fore']
-                prev = result['prev']
-
-                # 단위가 K, M, %으로 다양하여 실제 수치로 변경
-                bold_flt = Investing.getRealValue(result['bold'])
-                fore_flt = Investing.getRealValue(result['fore'])
-
-                sql = "INSERT INTO economic_events_schedule (event_cd, release_date, release_time, statistics_time, bold_value, fore_value, pre_release_yn, create_time, update_time) " \
-                      "VALUES (%s, '%s', '%s', %s, %s, %s, %s, now(), now()) " \
-                      "ON DUPLICATE KEY UPDATE release_time = '%s', statistics_time = %s, bold_value = %s, fore_value = %s, pre_release_yn = %s, update_time = now()"
-                sql_arg = (
-                cd, date_str, time, statistics_time, bold_flt, fore_flt, pre_release_yn, time, statistics_time,
-                bold_flt, fore_flt, pre_release_yn)
-
-                if (db.execute_query(sql, sql_arg) == False):
-                    # print(sql % sql_arg) # insert 에러 메세지를 보여준다.
-                    pass
-
-            except (TypeError, KeyError) as e:
-                print('에러정보 : ', e, file=sys.stderr)
-                print(date_splits, pre_statistics_time)
-
-        endTime = timeit.default_timer()
-        print("Cnt:", str(cnt), "\tElapsed time: ", str(endTime - startTime))
 
 # 당일 Economic Event 리스트 크롤링
 if 0:
@@ -143,10 +89,10 @@ if 0:
     master_list.columns = ['cd', 'nm_us', 'curr_id', 'smlID']
 
     satrt_date = '1/1/2010'
-    end_date = '7/25/2019'
+    end_date = '8/25/2019'
     for master in master_list.iterrows():
         # first set Headers and FormData
-        ihd = IndiceHistoricalData('https://www.investing.com/instruments/HistoricalDataAjax')
+        ihd = Investing.IndiceHistoricalData('https://www.investing.com/instruments/HistoricalDataAjax')
 
         header = {'name': master[1]['cd'],
                   'curr_id': master[1]['curr_id'],
@@ -170,7 +116,7 @@ if 0:
 
                 date_rlt = result[1]['Date']
                 date_splits = re.split('\W+', date_rlt)
-                date_str = str(date(int(date_splits[2]), calendar_map[date_splits[0]], int(date_splits[1])))
+                date_str = str(date(int(date_splits[2]), Investing.calendar_map[date_splits[0]], int(date_splits[1])))
 
                 close = result[1]['Price']
                 open = result[1]['Open']
@@ -179,8 +125,8 @@ if 0:
 
                 vol = Investing.getRealValue(result[1]['Vol.'])
 
-                sql = "INSERT INTO index_price (idx_cd, date, close, open, high, low, vol) " \
-                      "VALUES ('%s', '%s', %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE close = %s, open = %s, high = %s, low = %s, vol = %s"
+                sql = "INSERT INTO index_price (idx_cd, date, close, open, high, low, vol, create_time, update_time) " \
+                      "VALUES ('%s', '%s', %s, %s, %s, %s, %s, now(), now()) ON DUPLICATE KEY UPDATE close = %s, open = %s, high = %s, low = %s, vol = %s, update_time = now()"
                 sql_arg = (cd, date_str, close, open, high, low, vol, close, open, high, low, vol)
                 # print(sql % sql_arg)
 

@@ -24,7 +24,10 @@ CREATE TABLE IF NOT EXISTS `index_price` (
   `open` float NOT NULL,
   `high` float NOT NULL,
   `low` float NOT NULL,
-  `vol` int(11) DEFAULT NULL
+  `vol` int(11) DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL,
+  `update_time` datetime DEFAULT NULL,
+  PRIMARY KEY (`idx_cd`,`date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- 내보낼 데이터가 선택되어 있지 않습니다.

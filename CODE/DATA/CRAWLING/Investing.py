@@ -7,10 +7,15 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 import datetime
 import time
+import sys
 from itertools import count
 import arrow
+import re
+import timeit
 import pandas as pd
-
+from datetime import datetime
+from datetime import timedelta
+from datetime import date
 
 
 def getRealValue(s):
@@ -148,8 +153,16 @@ class InvestingEconomicCalendar():
         return self.result
 
 
+calendar_map = {'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6, 'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
+              , 'Q1': 1, 'Q2': 2, 'Q3': 3, 'Q4': 4}
+
+def CrawlingStart(obj):
+    obj.Start()
+
 class InvestingEconomicEventCalendar():
-    def __init__(self):
+    def __init__(self, econmic_event_list, db):
+        self.economic_event_list = econmic_event_list
+        self.db = db
         self.options = webdriver.ChromeOptions()
         if 0:
             self.options.add_argument('headless')
@@ -157,11 +170,96 @@ class InvestingEconomicEventCalendar():
             self.options.add_argument("disable-gpu")
             # 혹은 options.add_argument("--disable-gpu")
 
-        # self.wd = webdriver.Chrome('chromedriver', chrome_options=self.options)
-        self.wd = webdriver.Chrome('/Users/sangjinryu/Downloads/chromedriver', chrome_options=self.options)
+        self.wd = webdriver.Chrome('chromedriver', chrome_options=self.options)
+        #self.wd = webdriver.Chrome('/Users/sangjinryu/Downloads/chromedriver', chrome_options=self.options)
 
         self.wd.get('https://www.investing.com')
         time.sleep(60)
+
+    def Start(self):
+        startTime = timeit.default_timer()
+
+        for data in self.economic_event_list.iterrows():
+            cd = data[1]['cd']
+            nm = data[1]['nm_us']
+            link = data[1]['link']
+            ctry = data[1]['ctry']
+            period = data[1]['period']
+
+            # 배치가 중간에 중단된 경우 문제가 발생한 Event 이후부터 시작
+            if cd < 0:
+                # if cd not in (81,228,303,331,461,484,569,596,868,889,914,1037,1038,1040,1315,1468,1524,1526,1533,1534,1548,1571,1581,1650,1746,1747,1748,1751,1755,1762,1763,1765,1771,1772,1777,1793,1801,1810,1811,1812,1813,1820,1821,1878,1887,1913):
+                print('continue: ', nm, link)
+                continue
+
+            # Event별 Schedule 리스트 크롤링
+            cralwing_nm, results = self.GetEventSchedule(link, cd, 0.2)
+            print(cd, nm, cralwing_nm, link, len(results))
+
+            # 크롤링된 Event 이름으로 변경
+            if nm != cralwing_nm:
+                sql = "UPDATE economic_events" \
+                      "   SET nm_us='%s'" \
+                      " WHERE cd=%s"
+                sql_arg = (cralwing_nm, cd)
+
+                if (self.db.execute_query(sql, sql_arg) == False):
+                    # print(sql % sql_arg) # insert 에러 메세지를 보여준다.
+                    pass
+            # print(results)
+
+            pre_statistics_time = 0
+            # 시계역 역순(가장 최근 데이터가 처음)
+            for cnt, result in enumerate(results):
+                try:
+                    date_rlt = result['date']
+                    date_splits = re.split('\W+', date_rlt)
+                    date_str = str(date(int(date_splits[2]), calendar_map[date_splits[0]], int(date_splits[1])))
+
+                    # 통계시점에 대한 정보가 없는 경우 주기가 monthly인 경우 처리
+                    statistics_time = 'NULL' if len(date_splits) <= 3 or date_splits[3] not in calendar_map.keys() else \
+                        calendar_map[date_splits[3]]
+                    if period == 'M':
+                        # 첫 데이터인 경우 이전달의 값을 역으로 추정
+                        if pre_statistics_time == 0:
+                            pre_statistics_time = statistics_time + 1 if statistics_time < 12 else 1
+
+                        # 통계시점에 대한 정보가 없는 경우에 이전 데이터에 대한 정보를 사용해서 추정
+                        if statistics_time == 'NULL':
+                            statistics_time = pre_statistics_time - 1 if pre_statistics_time > 1 else 12
+
+                        pre_statistics_time = statistics_time
+
+                    time = result['time']
+                    # GDP처럼 추정치가 먼저 발표되는 경우
+                    pre_release_yn = result['pre_release_yn']
+
+                    bold = result['bold']
+                    fore = result['fore']
+                    prev = result['prev']
+
+                    # 단위가 K, M, %으로 다양하여 실제 수치로 변경
+                    bold_flt = getRealValue(result['bold'])
+                    fore_flt = getRealValue(result['fore'])
+
+                    sql = "INSERT INTO economic_events_schedule (event_cd, release_date, release_time, statistics_time, bold_value, fore_value, pre_release_yn, create_time, update_time) " \
+                          "VALUES (%s, '%s', '%s', %s, %s, %s, %s, now(), now()) " \
+                          "ON DUPLICATE KEY UPDATE release_time = '%s', statistics_time = %s, bold_value = %s, fore_value = %s, pre_release_yn = %s, update_time = now()"
+                    sql_arg = (
+                        cd, date_str, time, statistics_time, bold_flt, fore_flt, pre_release_yn, time, statistics_time,
+                        bold_flt, fore_flt, pre_release_yn)
+
+                    if (self.db.execute_query(sql, sql_arg) == False):
+                        # print(sql % sql_arg) # insert 에러 메세지를 보여준다.
+                        pass
+
+                except (TypeError, KeyError) as e:
+                    print('에러정보 : ', e, file=sys.stderr)
+                    print(date_splits, pre_statistics_time)
+
+            endTime = timeit.default_timer()
+            print("Cnt:", str(cnt), "\tElapsed time: ", str(endTime - startTime))
+
 
     def GetEventSchedule(self, url, cd, t_gap=0.2, loop_num=float('inf')):
 
@@ -199,8 +297,7 @@ class InvestingEconomicEventCalendar():
                     times = row.findAll('td', {'class': 'left'})
                     tmp_rlt['date'] = times[0].text.strip()
                     tmp_rlt['time'] = times[1].text.strip()
-                    tmp_rlt['pre_release_yn'] = 1 if times[1].find('span') != None and times[1].find('span')[
-                        'title'] == "Preliminary Release" else 0
+                    tmp_rlt['pre_release_yn'] = 1 if times[1].find('span') != None and times[1].find('span')['title'] == "Preliminary Release" else 0
 
                     values = row.findAll('td', {'class': 'noWrap'})
                     tmp_rlt['bold'] = values[0].text.strip()
