@@ -35,12 +35,12 @@ db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", pa
 # 등록된 Economic Event 리스트의 데이터를 크롤링
 # Economic Event 리스트는 investing.com의 Economic Calendar에서 수집 후 엑셀 작업으로 DB에 insert
 # 미국, 중국, 한국의 모든 이벤트
-if 0:
+if 1:
     # Economic Event 리스트 select
-    datas = db.select_query("SELECT cd, nm_us, link, ctry, period"
+    datas = db.select_query("SELECT cd, nm_us, link, ctry, period, type"
                             "  FROM economic_events"
                             " WHERE imp_us in (1,2,3)")
-    datas.columns = ['cd', 'nm_us', 'link', 'ctry', 'period']
+    datas.columns = ['cd', 'nm_us', 'link', 'ctry', 'period', 'type']
     # print(type(datas))
 
     # 병렬처리 개발중
@@ -72,7 +72,7 @@ if 0:
             count_loop += 1
     else:
         session = Investing.InvestingEconomicEventCalendar(datas, db)
-        session.Start()
+        session.Start(t_gap=0.2, loop_num=1)
 
 
 

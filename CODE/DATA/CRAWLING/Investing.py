@@ -1,3 +1,5 @@
+# _*_ coding: utf-8 _*_
+
 import urllib
 import urllib.request
 import requests
@@ -176,7 +178,7 @@ class InvestingEconomicEventCalendar():
         self.wd.get('https://www.investing.com')
         time.sleep(60)
 
-    def Start(self):
+    def Start(self, t_gap=0.2, loop_num=float('inf')):
         startTime = timeit.default_timer()
 
         for data in self.economic_event_list.iterrows():
@@ -185,6 +187,7 @@ class InvestingEconomicEventCalendar():
             link = data[1]['link']
             ctry = data[1]['ctry']
             period = data[1]['period']
+            type = data[1]['type']
 
             # 배치가 중간에 중단된 경우 문제가 발생한 Event 이후부터 시작
             if cd < 0:
@@ -193,18 +196,29 @@ class InvestingEconomicEventCalendar():
                 continue
 
             # Event별 Schedule 리스트 크롤링
-            cralwing_nm, results = self.GetEventSchedule(link, cd, 0.2)
+            cralwing_nm, results = self.GetEventSchedule(link, cd, t_gap, loop_num)
             print(cd, nm, cralwing_nm, link, len(results))
 
+            type_in_nm = 'Ori'
+            if 'WoW' in cralwing_nm:
+                type_in_nm = 'WoW'
+            elif 'MoM' in cralwing_nm:
+                type_in_nm = 'MoM'
+            elif 'QoQ' in cralwing_nm:
+                type_in_nm = 'QoQ'
+            elif 'YoY' in cralwing_nm:
+                type_in_nm = 'YoY'
+
             # 크롤링된 Event 이름으로 변경
-            if nm != cralwing_nm:
+            if nm != cralwing_nm or type != type_in_nm:
                 sql = "UPDATE economic_events" \
                       "   SET nm_us='%s'" \
+                      "     , type='%s'" \
                       " WHERE cd=%s"
-                sql_arg = (cralwing_nm, cd)
-
+                sql_arg = (cralwing_nm, type_in_nm, cd)
+                print(sql % sql_arg)
                 if (self.db.execute_query(sql, sql_arg) == False):
-                    # print(sql % sql_arg) # insert 에러 메세지를 보여준다.
+                    #print(sql % sql_arg) # update 에러 메세지를 보여준다.
                     pass
             # print(results)
 
@@ -261,7 +275,7 @@ class InvestingEconomicEventCalendar():
             print("Cnt:", str(cnt), "\tElapsed time: ", str(endTime - startTime))
 
 
-    def GetEventSchedule(self, url, cd, t_gap=0.2, loop_num=float('inf')):
+    def GetEventSchedule(self, url, cd, t_gap, loop_num):
 
         self.wd.get(url)
 
