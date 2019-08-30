@@ -123,7 +123,8 @@ if 0:
                 high = result[1]['High']
                 low = result[1]['Low']
 
-                vol = Investing.getRealValue(result[1]['Vol.'])
+                value, unit = Investing.getRealValue(result[1]['Vol.'])
+                vol = value * unit if value != 'NULL' or unit != 'NULL' else 'NULL'
 
                 sql = "INSERT INTO index_price (idx_cd, date, close, open, high, low, vol, create_time, update_time) " \
                       "VALUES ('%s', '%s', %s, %s, %s, %s, %s, now(), now()) ON DUPLICATE KEY UPDATE close = %s, open = %s, high = %s, low = %s, vol = %s, update_time = now()"

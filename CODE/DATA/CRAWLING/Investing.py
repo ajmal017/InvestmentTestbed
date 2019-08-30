@@ -24,27 +24,34 @@ def getRealValue(s):
     try:
         if len(s) == 0:
             value = 'NULL'
+            unit = 'NULL'
         else:
             s = s.replace(',', '')
             if s[-1].upper() == 'K':
-                value = float(s[:-1]) * 1000
+                value = float(s[:-1])
+                unit = 1000
             elif s[-1].upper() == 'M':
-                value = float(s[:-1]) * 1000000
+                value = float(s[:-1])
+                unit = 1000000
             elif s[-1].upper() == 'B':
-                value = float(s[:-1]) * 1000000000
+                value = float(s[:-1])
+                unit = 1000000000
             elif s[-1] == '%':
-                value = float(s[:-1]) / 100
+                value = float(s[:-1])
+                unit = 0.01
             elif s[-1] == '-':
                 value = 0.0
+                unit = 1
             else:
                 value = float(s)
+                unit = 1
 
-        return value
+        return value, unit
 
     except (ValueError, TypeError) as e:
         print('에러정보 : ', e, file=sys.stderr)
 
-        return None
+        return None, None
 
 
 class Good():
@@ -253,8 +260,11 @@ class InvestingEconomicEventCalendar():
                     prev = result['prev']
 
                     # 단위가 K, M, %으로 다양하여 실제 수치로 변경
-                    bold_flt = getRealValue(result['bold'])
-                    fore_flt = getRealValue(result['fore'])
+                    bold_value, bold_unit = getRealValue(result['bold'])
+                    bold_flt = bold_value * bold_unit if bold_value != 'NULL' or bold_unit != 'NULL' else 'NULL'
+                    fore_value, fore_unit = getRealValue(result['fore'])
+                    fore_flt = fore_value * fore_unit if fore_value != 'NULL' or fore_unit != 'NULL' else 'NULL'
+                    print(cd, '\t', date_str, '\t', bold_unit)
 
                     sql = "INSERT INTO economic_events_schedule (event_cd, release_date, release_time, statistics_time, bold_value, fore_value, pre_release_yn, create_time, update_time) " \
                           "VALUES (%s, '%s', '%s', %s, %s, %s, %s, now(), now()) " \
@@ -369,94 +379,3 @@ class IndiceHistoricalData():
     # print retrieved data
     def saveDataCSV(self):
         self.observations.to_csv(self.data['name'] + '.csv', sep='\t', encoding='utf-8')
-
-
-# https://www.investing.com/commodities/gold-historical-data
-GC = {
-    'name': 'GC',
-    'curr_id': 8830,
-    'smlID': 300004,
-    'header': 'Gold Futures',
-    'sort_col': 'date',
-    'action': 'historical_data'
-}
-
-# https://www.investing.com/commodities/copper-historical-data
-HG = {
-    'name': 'HG',
-    'curr_id': 8831,
-    'smlID': 300012,
-    'header': 'Copper Futures',
-    'sort_col': 'date',
-    'action': 'historical_data'
-}
-
-# https://www.investing.com/commodities/silver-historical-data
-SI = {
-    'name': 'SI',
-    'curr_id': 8836,
-    'smlID': 300044,
-    'header': 'Silver Futures',
-    'sort_col': 'date',
-    'action': 'historical_data'
-}
-
-# https://www.investing.com/commodities/natural-gas-historical-data
-NG = {
-    'name': 'NG',
-    'curr_id': 8862,
-    'smlID': 300092,
-    'header': 'Natural Gas Futures',
-    'sort_col': 'date',
-    'action': 'historical_data'
-}
-
-# https://www.investing.com/commodities/crude-oil-historical-data
-CL = {
-    'name': 'CL',
-    'curr_id': 8849,
-    'smlID': 300060,
-    'header': 'Crude Oil WTI Futures',
-    'sort_col': 'date',
-    'action': 'historical_data'
-}
-
-# https://www.investing.com/indices/us-30-historical-data
-DJI = {
-    'name': 'DJI',
-    'curr_id': 169,
-    'smlID': 2030170,
-    'header': 'Dow Jones Industrial Average',
-    'sort_col': 'date',
-    'action': 'historical_data'
-}
-
-# https://www.investing.com/indices/us-spx-500-historical-data
-SPX = {
-    'name': 'SPX',
-    'curr_id': 166,
-    'smlID': 2030167,
-    'header': 'S&P 500',
-    'sort_col': 'date',
-    'action': 'historical_data'
-}
-
-# https://www.investing.com/indices/nq-100-historical-data
-NDX = {
-    'name': 'NDX',
-    'curr_id': 20,
-    'smlID': 2030165,
-    'header': 'Nasdaq 100',
-    'sort_col': 'date',
-    'action': 'historical_data'
-}
-
-# https://www.investing.com/indices/eu-stoxx50-historical-data
-STOXX50E = {
-    'name': 'STOXX50E',
-    'curr_id': 175,
-    'smlID': 2030175,
-    'header': 'Euro Stoxx 50',
-    'sort_col': 'date',
-    'action': 'historical_data'
-}
