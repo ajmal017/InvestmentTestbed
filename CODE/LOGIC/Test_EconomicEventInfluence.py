@@ -47,15 +47,17 @@ if 1:
 
     # Economic Event 리스트
     event_datas = db.select_query("select nm_us, cd, unit"
-                                 "  from economic_events"
-                                 " where imp_us = 3"
-                                 "   and type = 'Ori'")
+                                 "  from economic_events")
+                                 #" where imp_us = 3"
+                                 #"   and type = 'Ori'")
     event_datas.columns = ['nm', 'cd', 'unit']
 
+    # Raw Data 로그
     raw_result_header = 'cd' + '\t' + 'nm' + '\t' + 'curr_date' + '\t' + 'diff' + '\t' + 'in_date' + '\t' + 'out_date'
     for pri_cd in pivoted_price_datas_close:
         raw_result_header = raw_result_header + '\t' + pri_cd
     raw_result_file.write(raw_result_header + '\n')
+
 
     # 지수 데이터가 존재하는 기간 이후 발생한 Economic Event 사용
     start_date = datetime.strptime('2010-02-01', '%Y-%m-%d').date()
@@ -63,7 +65,6 @@ if 1:
         nm = event[1]['nm']
         cd = event[1]['cd']
         unit = event[1]['unit']
-        #print(nm, cd, unit)
 
         # Economic Event별 스케줄 데이터
         event_schedule_datas = db.select_query("select release_date, bold_value"
@@ -114,11 +115,21 @@ if 1:
                         try:
                             in_value = pivoted_price_datas_open[price_cd][str(in_date)]
                             out_vlaue = pivoted_price_datas_close[price_cd][str(out_date)]
+                            ratio = out_vlaue/in_value-1
                         except (KeyError) as e:
                             print('에러정보 : ', e, file=sys.stderr)
                             print(cd, nm, price_cd, curr_date, in_date, out_date)
 
-                        raw_result_body = raw_result_body + '\t' + str(out_vlaue/in_value-1)
+                        sql = "INSERT INTO economic_events_results (event_cd, event_nm, index_cd, event_date" \
+                              ", position_in_date, position_out_date, position_in_value, position_out_value, event_value_diff, index_value_ratio) " \
+                              "VALUES (%s, '%s', '%s', '%s', '%s', '%s', %s, %s, %s, %s) ON DUPLICATE KEY UPDATE event_value_diff = %s, index_value_ratio = %s"
+                        sql_arg = (cd, nm, price_cd, str(curr_date), str(in_date), str(out_date), in_value, out_vlaue, diff, ratio, diff, ratio)
+                        #print(sql % sql_arg)
+
+                        if (db.execute_query(sql, sql_arg) == False):
+                            print(sql % sql_arg)
+
+                        raw_result_body = raw_result_body + '\t' + str(ratio)
                     raw_result_file.write(raw_result_body + '\n')
 
             prev_date = curr_date
