@@ -14,6 +14,7 @@ from itertools import count
 import arrow
 import re
 import timeit
+import platform
 import pandas as pd
 from datetime import datetime
 from datetime import timedelta
@@ -179,8 +180,10 @@ class InvestingEconomicEventCalendar():
             self.options.add_argument("disable-gpu")
             # 혹은 options.add_argument("--disable-gpu")
 
-        self.wd = webdriver.Chrome('chromedriver', chrome_options=self.options)
-        #self.wd = webdriver.Chrome('/Users/sangjinryu/Downloads/chromedriver', chrome_options=self.options)
+        if platform.system() == 'Windows':
+            self.wd = webdriver.Chrome('chromedriver', chrome_options=self.options)
+        else:
+            self.wd = webdriver.Chrome('/Users/sangjinryu/Downloads/chromedriver', chrome_options=self.options)
 
         self.wd.get('https://www.investing.com')
         time.sleep(60)
@@ -264,7 +267,7 @@ class InvestingEconomicEventCalendar():
                     bold_flt = bold_value * bold_unit if bold_value != 'NULL' or bold_unit != 'NULL' else 'NULL'
                     fore_value, fore_unit = getRealValue(result['fore'])
                     fore_flt = fore_value * fore_unit if fore_value != 'NULL' or fore_unit != 'NULL' else 'NULL'
-                    print(cd, '\t', date_str, '\t', bold_unit)
+                    #print(cd, '\t', date_str, '\t', bold_unit)
 
                     sql = "INSERT INTO economic_events_schedule (event_cd, release_date, release_time, statistics_time, bold_value, fore_value, pre_release_yn, create_time, update_time) " \
                           "VALUES (%s, '%s', '%s', %s, %s, %s, %s, now(), now()) " \
