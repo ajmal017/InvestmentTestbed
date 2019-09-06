@@ -33,12 +33,20 @@ if 1:
     pivoted_price_datas_open = sampled_price_datas.pivot(index='date', columns='cd', values='open').fillna(method='ffill')
 
     for cd in pivoted_price_datas_close:
-        analysis = TechnicalAnalysis_Util.BollingerBand(pivoted_price_datas_close[cd])
+        data = pivoted_price_datas_close[cd][-500:]
+
+        # pandas의 series를 input data 형태로 사용
+        analysis = TechnicalAnalysis_Util.BollingerBand(data)
         analysis_datas = analysis.getDatas()
 
-        panel = Figure_Util.Figure()
-        panel.draw(analysis_datas, title=cd)
+        analysis = TechnicalAnalysis_Util.RSI(data)
+        analysis_datas['rsi'] = analysis.getDatas()
 
+        analysis = TechnicalAnalysis_Util.MACD(data)
+        analysis_datas['macd'] = analysis.getDatas()
+
+        panel = Figure_Util.Figure()
+        panel.draw(analysis_datas, title=cd, subplots=['rsi', 'macd'], figsize=(20,10))
 
 db.disconnect()
 
