@@ -10,6 +10,7 @@ from selenium import webdriver
 import datetime
 import time
 import sys
+import os
 from itertools import count
 import arrow
 import re
@@ -183,7 +184,7 @@ class InvestingEconomicEventCalendar():
         if platform.system() == 'Windows':
             self.wd = webdriver.Chrome('chromedriver', chrome_options=self.options)
         else:
-            self.wd = webdriver.Chrome('/Users/sangjinryu/Downloads/chromedriver', chrome_options=self.options)
+            self.wd = webdriver.Chrome('%s/chromedriver' % (os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))), chrome_options=self.options)
 
         self.wd.get('https://www.investing.com')
         time.sleep(60)
