@@ -72,7 +72,7 @@ if 1:
             count_loop += 1
     else:
         session = Investing.InvestingEconomicEventCalendar(datas, db)
-        session.Start(t_gap=0.2, loop_num=1)
+        session.Start(t_gap=0.2, loop_num=0)
 
 
 
@@ -88,8 +88,8 @@ if 0:
                                   "  FROM index_master")
     master_list.columns = ['cd', 'nm_us', 'curr_id', 'smlID']
 
-    satrt_date = '1/1/2010'
-    end_date = '8/25/2019'
+    satrt_date = '1/1/2001'
+    end_date = '9/5/2019'
     for master in master_list.iterrows():
         # first set Headers and FormData
         ihd = Investing.IndiceHistoricalData('https://www.investing.com/instruments/HistoricalDataAjax')
