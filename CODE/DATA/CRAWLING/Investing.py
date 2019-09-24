@@ -378,6 +378,7 @@ class IndiceHistoricalData():
 
     # print retrieved data
     def printData(self):
+        print(self.data)
         print(self.observations)
 
     # print retrieved data

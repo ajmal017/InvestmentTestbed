@@ -35,7 +35,7 @@ db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", pa
 # 등록된 Economic Event 리스트의 데이터를 크롤링
 # Economic Event 리스트는 investing.com의 Economic Calendar에서 수집 후 엑셀 작업으로 DB에 insert
 # 미국, 중국, 한국의 모든 이벤트
-if 1:
+if 0:
     # Economic Event 리스트 select
     datas = db.select_query("SELECT cd, nm_us, link, ctry, period, type"
                             "  FROM economic_events"
@@ -83,20 +83,19 @@ if 0:
     i.getEvents()
 
 # 각 국가별 지수 및 원자재 근월물 가격 데이터 크롤링
-if 0:
-    master_list = db.select_query("SELECT cd, nm_us, curr_id, smlID"
+if 1:
+    master_list = db.select_query("SELECT cd, nm_us, curr_id"
                                   "  FROM index_master")
-    master_list.columns = ['cd', 'nm_us', 'curr_id', 'smlID']
+    master_list.columns = ['cd', 'nm_us', 'curr_id']
 
     satrt_date = '1/1/2001'
-    end_date = '9/5/2019'
+    end_date = '9/23/2019'
     for master in master_list.iterrows():
         # first set Headers and FormData
         ihd = Investing.IndiceHistoricalData('https://www.investing.com/instruments/HistoricalDataAjax')
 
         header = {'name': master[1]['cd'],
-                  'curr_id': master[1]['curr_id'],
-                  'smlID': master[1]['smlID'],
+                  'curr_id': master[1]['curr_id'], # investing.com html에는 'key'로 조회
                   'header': master[1]['nm_us'],
                   'sort_col': 'date',
                   'action': 'historical_data'}
@@ -107,7 +106,7 @@ if 0:
         ihd.updateStartingEndingDate(satrt_date, end_date)
         ihd.setSortOreder('ASC')
         ihd.downloadData()
-        # ihd.printData()
+        ihd.printData()
 
         results = ihd.observations
         for result in results.iterrows():

@@ -22,23 +22,24 @@ CREATE TABLE IF NOT EXISTS `index_master` (
   `nm_us` varchar(64) NOT NULL,
   `nm_kr` varchar(128) DEFAULT NULL,
   `curr_id` int(8) NOT NULL,
-  `smlID` int(16) NOT NULL,
   `type` char(1) DEFAULT NULL,
   PRIMARY KEY (`cd`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
--- 테이블 데이터 investing.com.index_master:~9 rows (대략적) 내보내기
+-- 테이블 데이터 investing.com.index_master:~11 rows (대략적) 내보내기
 /*!40000 ALTER TABLE `index_master` DISABLE KEYS */;
-INSERT INTO `index_master` (`cd`, `nm_us`, `nm_kr`, `curr_id`, `smlID`, `type`) VALUES
-	('CL', 'Crude Oil WTI Futures', NULL, 8849, 300060, 'F'),
-	('DJI', 'Dow Jones Industrial Average', NULL, 169, 2030170, 'I'),
-	('GC', 'Gold Futures', NULL, 8830, 300004, 'F'),
-	('HG', 'Copper Futures', NULL, 8831, 300012, 'F'),
-	('NDX', 'Nasdaq 100', NULL, 20, 2030165, 'I'),
-	('NG', 'Natural Gas Futures', NULL, 8862, 300092, 'F'),
-	('SI', 'Silver Futures', NULL, 8836, 300044, 'F'),
-	('SPX', 'S&P 500', NULL, 166, 2030167, 'I'),
-	('STOXX50E', 'Euro Stoxx 50', NULL, 175, 2030175, 'I');
+INSERT INTO `index_master` (`cd`, `nm_us`, `nm_kr`, `curr_id`, `type`) VALUES
+	('CL', 'Crude Oil WTI Futures', NULL, 8849, 'F'),
+	('DJI', 'Dow Jones Industrial Average', NULL, 169, 'I'),
+	('GC', 'Gold Futures', NULL, 8830, 'F'),
+	('HG', 'Copper Futures', NULL, 8831, 'F'),
+	('KQ150', 'KOSDAQ 150', NULL, 980241, 'I'),
+	('KS200', 'KOSPI 200', NULL, 37427, 'I'),
+	('NDX', 'Nasdaq 100', NULL, 20, 'I'),
+	('NG', 'Natural Gas Futures', NULL, 8862, 'F'),
+	('SI', 'Silver Futures', NULL, 8836, 'F'),
+	('SPX', 'S&P 500', NULL, 166, 'I'),
+	('STOXX50E', 'Euro Stoxx 50', NULL, 175, 'I');
 /*!40000 ALTER TABLE `index_master` ENABLE KEYS */;
 
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

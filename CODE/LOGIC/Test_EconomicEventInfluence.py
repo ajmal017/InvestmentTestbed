@@ -22,7 +22,7 @@ db = DB_Util.DB()
 db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", password="ryumaria")
 
 PRINT_OUT_RAW_DATA_TO_FILE = True
-# Economic Event 변동별 수익률 비규
+# Economic Event 변동별 가격지표들의 수익률 비교
 if 1:
 
     if PRINT_OUT_RAW_DATA_TO_FILE:
@@ -96,6 +96,7 @@ if 1:
 
                     # 가격지표(Index)별 경제지표 발표에 의한 수익률 확인
                     for price_idx, price_cd in enumerate(pivoted_price_datas_close):
+                        # 모든 가격지표에 동일한 진입 청산일 적용
                         if price_idx == 0:
                             # 경제지표 발표 익일 포지션 진입
                             for check_point in range(0, len(price_datas_date_list), 1):
