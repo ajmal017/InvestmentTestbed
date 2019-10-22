@@ -5,6 +5,7 @@ import sys
 import warnings
 import time
 import re
+import copy
 
 from datetime import datetime
 from datetime import timedelta
@@ -35,7 +36,7 @@ db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", pa
 # 등록된 Economic Event 리스트의 데이터를 크롤링
 # Economic Event 리스트는 investing.com의 Economic Calendar에서 수집 후 엑셀 작업으로 DB에 insert
 # 미국, 중국, 한국의 모든 이벤트
-if 0:
+if 1:
     # Economic Event 리스트 select
     datas = db.select_query("SELECT cd, nm_us, link, ctry, period, type"
                             "  FROM economic_events"
@@ -51,7 +52,7 @@ if 0:
         # 병렬처리를 위해 datas를 datas_split array로 분할
         unit_size = int(len(datas)/max_process_num)+1
         for i in range(max_process_num):
-            sub_datas = datas[i*unit_size:min((i+1)*unit_size,len(datas))]
+            sub_datas = copy.deepcopy(datas[i*unit_size:min((i+1)*unit_size,len(datas))])
             print(i*unit_size,min((i+1)*unit_size,len(datas)))
 
             # chromedriver를 이용하여 session 연결
@@ -72,7 +73,7 @@ if 0:
             count_loop += 1
     else:
         session = Investing.InvestingEconomicEventCalendar(datas, db)
-        session.Start(t_gap=0.2, loop_num=0)
+        session.Start(t_gap=0.2, loop_num=3)
 
 
 
@@ -83,13 +84,13 @@ if 0:
     i.getEvents()
 
 # 각 국가별 지수 및 원자재 근월물 가격 데이터 크롤링
-if 1:
+if 0:
     master_list = db.select_query("SELECT cd, nm_us, curr_id"
                                   "  FROM index_master")
     master_list.columns = ['cd', 'nm_us', 'curr_id']
 
-    satrt_date = '1/1/2001'
-    end_date = '9/23/2019'
+    satrt_date = '9/1/2019'
+    end_date = '9/24/2019'
     for master in master_list.iterrows():
         # first set Headers and FormData
         ihd = Investing.IndiceHistoricalData('https://www.investing.com/instruments/HistoricalDataAjax')
