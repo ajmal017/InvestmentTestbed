@@ -29,14 +29,11 @@ from dateutil.relativedelta import relativedelta
 MULTI_PROCESS = False
 
 
-# Wrap운용팀 DB Connect
-db = DB_Util.DB()
-db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", password="ryumaria")
 
 # 등록된 Economic Event 리스트의 데이터를 크롤링
 # Economic Event 리스트는 investing.com의 Economic Calendar에서 수집 후 엑셀 작업으로 DB에 insert
 # 미국, 중국, 한국의 모든 이벤트
-if 1:
+def CrawlEconomicEventValues(t_gap=0.2, loop_num=3):
     # Economic Event 리스트 select
     datas = db.select_query("SELECT cd, nm_us, link, ctry, period, type"
                             "  FROM economic_events"
@@ -73,24 +70,16 @@ if 1:
             count_loop += 1
     else:
         session = Investing.InvestingEconomicEventCalendar(datas, db)
-        session.Start(t_gap=0.2, loop_num=3)
+        session.Start(t_gap=t_gap, loop_num=loop_num)
 
-
-
-# 당일 Economic Event 리스트 크롤링
-if 0:
-    country_list = ['United States', 'South Korea', 'China', 'Euro Zone']
-    i = crawling.InvestingEconomicCalendar('https://www.investing.com/economic-calendar/', country_list)
-    i.getEvents()
 
 # 각 국가별 지수 및 원자재 근월물 가격 데이터 크롤링
-if 0:
+def CrawlHistoricalPrices(satrt_date, end_date):
+
     master_list = db.select_query("SELECT cd, nm_us, curr_id"
                                   "  FROM index_master")
     master_list.columns = ['cd', 'nm_us', 'curr_id']
 
-    satrt_date = '9/1/2019'
-    end_date = '9/24/2019'
     for master in master_list.iterrows():
         # first set Headers and FormData
         ihd = Investing.IndiceHistoricalData('https://www.investing.com/instruments/HistoricalDataAjax')
@@ -135,7 +124,7 @@ if 0:
                     print(sql % sql_arg)
             except (TypeError, KeyError) as e:
                 print('에러정보 : ', e, file=sys.stderr)
-                print(date_splits, pre_statistics_time)
+                #print(date_splits, pre_statistics_time)
         # ihd.saveDataCSV()
 
 if 0:
@@ -179,4 +168,27 @@ if 0:
             print('에러정보 : ', str(last_cd), file=sys.stderr)
             print(str(last_cd), '\t', last_nm_us)
 
-db.disconnect()
+
+
+if __name__ == '__main__':
+    # Wrap운용팀 DB Connect
+    db = DB_Util.DB()
+    db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", password="ryumaria")
+
+    if 0:
+        satrt_date = '10/1/2019'
+        end_date = '12/15/2019'
+        CrawlHistoricalPrices(satrt_date, end_date)
+
+    if 1:
+        t_gap = 0.2
+        loop_num = 3
+        CrawlEconomicEventValues(t_gap, loop_num)
+
+    # 당일 Economic Event 리스트 크롤링
+    if 0:
+        country_list = ['United States', 'South Korea', 'China', 'Euro Zone']
+        i = crawling.InvestingEconomicCalendar('https://www.investing.com/economic-calendar/', country_list)
+        i.getEvents()
+
+    db.disconnect()
