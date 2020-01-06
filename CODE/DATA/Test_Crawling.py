@@ -113,7 +113,7 @@ def CrawlHistoricalPrices(satrt_date, end_date):
                 low = result[1]['Low']
 
                 value, unit = Investing.getRealValue(result[1]['Vol.'])
-                vol = value * unit if value != 'NULL' or unit != 'NULL' else 'NULL'
+                vol = int(value * unit) if value != 'NULL' or unit != 'NULL' else 'NULL'
 
                 sql = "INSERT INTO index_price (idx_cd, date, close, open, high, low, vol, create_time, update_time) " \
                       "VALUES ('%s', '%s', %s, %s, %s, %s, %s, now(), now()) ON DUPLICATE KEY UPDATE close = %s, open = %s, high = %s, low = %s, vol = %s, update_time = now()"
@@ -175,12 +175,12 @@ if __name__ == '__main__':
     db = DB_Util.DB()
     db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", password="ryumaria")
 
-    if 0:
-        satrt_date = '10/1/2019'
-        end_date = '12/15/2019'
+    if 1:
+        satrt_date = '1/1/2000'
+        end_date = '1/3/2020'
         CrawlHistoricalPrices(satrt_date, end_date)
 
-    if 1:
+    if 0:
         t_gap = 0.2
         loop_num = 3
         CrawlEconomicEventValues(t_gap, loop_num)
