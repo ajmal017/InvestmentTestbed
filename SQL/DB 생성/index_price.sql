@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS `index_price` (
   `open` float NOT NULL,
   `high` float NOT NULL,
   `low` float NOT NULL,
-  `vol` int(11) DEFAULT NULL,
+  `vol` float DEFAULT NULL,
   `create_time` datetime DEFAULT NULL,
   `update_time` datetime DEFAULT NULL,
   PRIMARY KEY (`idx_cd`,`date`)
