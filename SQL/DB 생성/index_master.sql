@@ -39,7 +39,7 @@ INSERT INTO `index_master` (`cd`, `curr_id`, `type`, `nm_us`, `nm_kr`) VALUES
 	('SX5E', 175, 'I', 'Euro Stoxx 50', NULL),
 	('NKY', 178, 'I', 'Nikkei 225', NULL),
 	('HSI', 179, 'I', 'Hang Seng', NULL),
-	('DX', 8827, 'F', 'Dollar Index', NULL),
+	('DX', 8827, 'C', 'Dollar Index', NULL),
 	('GC', 8830, 'F', 'Gold Futures', NULL),
 	('HG', 8831, 'F', 'Copper Futures', NULL),
 	('SI', 8836, 'F', 'Silver Futures', NULL),
@@ -59,7 +59,8 @@ INSERT INTO `index_master` (`cd`, `curr_id`, `type`, `nm_us`, `nm_kr`) VALUES
 	('SHSZ300', 940801, 'I', 'CSI 300', NULL),
 	('SZSE', 942630, 'I', 'SZSE', NULL),
 	('KOSDQ150', 980241, 'I', 'KOSDAQ 150', NULL),
-	('HNX30', 995072, 'I', 'HNX 30', NULL);
+	('HNX30', 995072, 'I', 'HNX 30', NULL),
+	('MSCIEMC', 996372, 'C', 'MSCI EM Currency', NULL);
 /*!40000 ALTER TABLE `index_master` ENABLE KEYS */;
 
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

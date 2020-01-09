@@ -5,7 +5,7 @@ SELECT a.event_nm, a.event_cd, e.nm_us AS index_nm, a.index_cd
 	  , FORMAT(d.w_cnt/(a.pos_cnt+b.neg_cnt+c.w_cnt+d.w_cnt),4) AS neg2_hit
 	  , FORMAT((a.pos_ratio*a.pos_cnt - b.neg_ratio*b.neg_cnt)/(a.pos_cnt+b.neg_cnt+c.w_cnt+d.w_cnt),4) AS pos_ratio
 	  , FORMAT(c.w_ratio*c.w_cnt/(a.pos_cnt+b.neg_cnt+c.w_cnt+d.w_cnt),4) AS neg1_ratio
-	  , FORMAT(d.w_ratio*d.w_cnt/(a.pos_cnt+b.neg_cnt+c.w_cnt+d.w_cnt),4) AS neg1_ratio
+	  , FORMAT(d.w_ratio*d.w_cnt/(a.pos_cnt+b.neg_cnt+c.w_cnt+d.w_cnt),4) AS neg2_ratio
   FROM
   (SELECT event_nm, event_cd, index_cd, COUNT(*) AS pos_cnt, AVG(index_value_ratio) AS pos_ratio
      FROM economic_events_results
