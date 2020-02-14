@@ -28,13 +28,25 @@ if platform.system() == 'Windows':
 else:
     wd = webdriver.Chrome('%s/chromedriver' % (os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))), chrome_options=options)
 
-#
-wd.get('https://www.investing.com/equities/south-korea')
-time.sleep(10)
+country = 'Korea'
+if country == 'Korea':
+    wd.get('https://www.investing.com/equities/south-korea')
+    time.sleep(10)
 
-group_type = wd.find_element_by_xpath('//*[@id="all"]')
-group_type.click()
-time.sleep(20)
+    # group_type = wd.find_element_by_xpath('//*[@id="all"]')
+    # group_type = wd.find_element_by_xpath('//*[@id="37427"]')  # KOSPI 200
+    group_type = wd.find_element_by_xpath('//*[@id="980241"]') # KOSDAQ 150
+    group_type.click()
+    time.sleep(10)
+else:
+    wd.get('https://www.investing.com/equities/united-states')
+    time.sleep(10)
+
+    group_type = wd.find_element_by_xpath('//*[@id="166"]') # S&P 500
+    # group_type = wd.find_element_by_xpath('//*[@id="20"]')  # Nasdaq 100
+    group_type.click()
+    time.sleep(10)
+
 
 main_html = wd.page_source
 main_bs = BeautifulSoup(main_html, 'html.parser')
