@@ -191,7 +191,15 @@ class InvestingStockInfo():
         # 크롬 웹드라이버 실행
         self.wd = self.GetWebDriver()
 
-    def GetCompsInfo(self):
+    def GetCompsInfo(self, cnt=0):
+
+        self.wd.get(self.country_equity_dir[self.country])
+        '''
+        if cnt == 0:
+            time.sleep(30)
+        else:
+            time.sleep(10)
+        '''
 
         # 그룹내 기들의 기본 데이터를 출력
         results = []
@@ -201,14 +209,14 @@ class InvestingStockInfo():
         html = self.wd.page_source
         bs = BeautifulSoup(html, 'html.parser')
         data_list = bs.find('table', {'id': 'cross_rate_markets_stocks_1'}).find('tbody')
-        for idx, data in enumerate(data_list):
+        for idx_data, data in enumerate(data_list):
 
             tmp_rlt = {}
 
             pid = data['id'].split('_')[1]
             nm = data.find('a')['title']
             comp_sub_dir = data.find('a')['href']
-            print(str(idx) + '\t' + pid + '\t' + nm + '\t' + comp_sub_dir)
+            print(str(idx_data) + '\t' + pid + '\t' + nm + '\t' + comp_sub_dir)
             # continue
 
             last = data.find('td', {'class': 'pid-%s-last' % (pid)}).text
@@ -272,8 +280,6 @@ class InvestingStockInfo():
                 return results
 
     def SelectGroup(self):
-        self.wd.get(self.country_equity_dir[self.country])
-        time.sleep(1)
 
         if self.country == 'KR':
             if self.group == 'KOSPI 200':
@@ -289,7 +295,7 @@ class InvestingStockInfo():
             group_type = self.wd.find_element_by_xpath('//*[@id="all"]')
 
         group_type.click()
-        time.sleep(1)
+        time.sleep(10)
 
     def GetWebDriver(self):
 
