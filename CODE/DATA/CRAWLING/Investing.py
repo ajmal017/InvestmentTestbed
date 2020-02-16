@@ -183,10 +183,11 @@ class InvestingStockInfo():
         self.earnings_sub = '-earnings'
 
     def Start(self):
-        wd = self.GetWebDriver()
-        self.SelectGroup(wd)
+        # 크롬 웹드라이버 실행
+        self.wd = self.GetWebDriver()
+        self.SelectGroup()
 
-        main_html = wd.page_source
+        main_html = self.wd.page_source
         main_bs = BeautifulSoup(main_html, 'html.parser')
         data_list = main_bs.find('tbody')
         for data in data_list:
@@ -204,20 +205,27 @@ class InvestingStockInfo():
 
             comp_dir = self.root_dir + '/' + comp_sub_dir
             comp_earnings_url = comp_dir + self.earnings_sub
+            print(comp_earnings_url)
 
-            earnings = self.GetEarningsData(wd, comp_earnings_url)
+            earnings = self.GetEarningsData(comp_earnings_url)
             print(earnings)
-            break
 
-    def GetEarningsData(self, wd, url, t_gap=0.5):
-        wd.get('%s' % (url))
+    def GetEarningsData(self, url, t_gap=0.5, loop_num=0):
+        self.wd.get('%s' % (url))
 
         results = []
+        loop_cnt = 0
         for page in count(1):
             try:
+                # 정해진 횟수만 크롤링
+                if loop_cnt >= loop_num:
+                    raise Exception('loop_cnt: ' % loop_cnt)
+                else:
+                    loop_cnt += 1
+
                 script = 'void(0)'  # 사용하는 페이지를 이동시키는 js 코드
                 # self.wd.execute_script(script)  # js 실행
-                result = wd.find_element_by_xpath('// *[ @ id = "showMoreEarningsHistory"] / a')
+                result = self.wd.find_element_by_xpath('// *[ @ id = "showMoreEarningsHistory"] / a')
                 result.click()
 
 
@@ -225,23 +233,20 @@ class InvestingStockInfo():
             except:
                 # print('error: %s' % str(page))
 
-                html = wd.page_source
+                html = self.wd.page_source
                 bs = BeautifulSoup(html, 'html.parser')
-                tbody = bs.findAll('tbody')[1] # 임시로 인덱스를 통해 데이터 추
+                tbody = bs.find('table', {'class':'genTbl openTbl ecoCalTbl earnings earningsPageTbl'}).find('tbody')
                 rows = tbody.findAll('tr')
 
                 for row in rows:
+                    release_date = row['event_timestamp']
+
                     tmp_tbl = row.findAll('td')
-
-
-                    release_date = tmp_tbl[0].text
                     period_end = tmp_tbl[1].text
-
                     eps_bold = getRealValue(tmp_tbl[2].text)
                     eps_fore = getRealValue(tmp_tbl[3].text.split('/')[1])
                     revenue_bold = getRealValue(tmp_tbl[4].text)
                     revenue_fore = getRealValue(tmp_tbl[5].text.split('/')[1])
-
 
                     results.append({'release_date': release_date, 'period_end': period_end
                                        , 'eps_bold': eps_bold, 'eps_fore': eps_fore
@@ -249,22 +254,22 @@ class InvestingStockInfo():
 
                 return results
 
-
-    def SelectGroup(self, wd):
-        wd.get(self.country_equity_dir[self.country])
+    def SelectGroup(self):
+        self.wd.get(self.country_equity_dir[self.country])
         time.sleep(1)
 
         if self.country == 'KR':
-            # group_type = wd.find_element_by_xpath('//*[@id="all"]')
             if self.group == 'KOSPI 200':
-                group_type = wd.find_element_by_xpath('//*[@id="37427"]')
+                group_type = self.wd.find_element_by_xpath('//*[@id="37427"]')
             elif self.group == 'KOSDAQ 150':
-                group_type = wd.find_element_by_xpath('//*[@id="980241"]')
+                group_type = self.wd.find_element_by_xpath('//*[@id="980241"]')
         elif self.country == 'US':
             if self.group == 'S&P 500':
-                group_type = wd.find_element_by_xpath('//*[@id="166"]')
+                group_type = self.wd.find_element_by_xpath('//*[@id="166"]')
             elif self.group == 'Nasdaq 100':
-                group_type = wd.find_element_by_xpath('//*[@id="20"]')
+                group_type = self.wd.find_element_by_xpath('//*[@id="20"]')
+        else:
+            group_type = self.wd.find_element_by_xpath('//*[@id="all"]')
 
         group_type.click()
         time.sleep(1)
@@ -272,7 +277,10 @@ class InvestingStockInfo():
     def GetWebDriver(self):
 
         options = webdriver.ChromeOptions()
-        if 0:
+
+        # 크롬을 BackGround에서 실행할 경우
+        do_background = False
+        if do_background == True:
             options.add_argument('headless')
             options.add_argument('window-size=1920x1080')
             options.add_argument("disable-gpu")
