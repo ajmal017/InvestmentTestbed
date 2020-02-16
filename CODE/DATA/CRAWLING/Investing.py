@@ -181,6 +181,7 @@ class InvestingStockInfo():
         self.country_equity_dir = {'KR': '%s/south-korea' % (self.equity_dir), 'US': '%s/united-states' % (self.equity_dir)}
 
         self.earnings_sub = '-earnings'
+        self.profile_sub = '-company - profile'
 
     def SetCountryGroupInfo(self, country, group):
         self.country = country
