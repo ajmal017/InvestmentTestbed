@@ -171,7 +171,7 @@ def CrawlingStart(obj):
     obj.Start()
 
 class InvestingStockInfo():
-    def __init__(self, db, country, group):
+    def __init__(self, db, country='KR', group='KOSPI 200'):
         self.db = db
         self.country = country
         self.group = group
@@ -182,19 +182,33 @@ class InvestingStockInfo():
 
         self.earnings_sub = '-earnings'
 
+    def SetCountryGroupInfo(self, country, group):
+        self.country = country
+        self.group = group
+
     def Start(self):
+
         # 크롬 웹드라이버 실행
         self.wd = self.GetWebDriver()
+
+    def GetCompsInfo(self):
+
+        # 그룹내 기들의 기본 데이터를 출력
+        results = []
+
         self.SelectGroup()
 
-        main_html = self.wd.page_source
-        main_bs = BeautifulSoup(main_html, 'html.parser')
-        data_list = main_bs.find('tbody')
-        for data in data_list:
+        html = self.wd.page_source
+        bs = BeautifulSoup(html, 'html.parser')
+        data_list = bs.find('table', {'id': 'cross_rate_markets_stocks_1'}).find('tbody')
+        for idx, data in enumerate(data_list):
+
+            tmp_rlt = {}
+
             pid = data['id'].split('_')[1]
             nm = data.find('a')['title']
             comp_sub_dir = data.find('a')['href']
-            # print(pid + nm + link)
+            print(str(idx) + '\t' + pid + '\t' + nm + '\t' + comp_sub_dir)
             # continue
 
             last = data.find('td', {'class': 'pid-%s-last' % (pid)}).text
@@ -205,10 +219,14 @@ class InvestingStockInfo():
 
             comp_dir = self.root_dir + '/' + comp_sub_dir
             comp_earnings_url = comp_dir + self.earnings_sub
-            print(comp_earnings_url)
 
-            earnings = self.GetEarningsData(comp_earnings_url)
-            print(earnings)
+            # 기업 기본정보 저장
+            tmp_rlt['pid'] = pid
+            tmp_rlt['nm'] = nm
+            tmp_rlt['earnings_url'] = comp_earnings_url
+            results.append(tmp_rlt)
+
+        return results
 
     def GetEarningsData(self, url, t_gap=0.5, loop_num=0):
         self.wd.get('%s' % (url))
@@ -227,7 +245,6 @@ class InvestingStockInfo():
                 # self.wd.execute_script(script)  # js 실행
                 result = self.wd.find_element_by_xpath('// *[ @ id = "showMoreEarningsHistory"] / a')
                 result.click()
-
 
                 time.sleep(t_gap)  # 크롤링 로직을 수행하기 위해 5초정도 쉬어준다.
             except:
