@@ -193,12 +193,12 @@ class InvestingStockInfo():
         # 크롬 웹드라이버 실행
         self.wd = self.GetWebDriver()
 
-    def GetCompsInfo(self, cnt=0):
+    def GetCompsInfo(self, columns, cnt=0):
 
         self.wd.get(self.country_equity_dir[self.country])
 
         # 그룹내 기들의 기본 데이터를 출력
-        results = []
+        df = pd.DataFrame(columns=columns)
 
         self.SelectGroup()
 
@@ -206,8 +206,6 @@ class InvestingStockInfo():
         bs = BeautifulSoup(html, 'html.parser')
         data_list = bs.find('table', {'id': 'cross_rate_markets_stocks_1'}).find('tbody')
         for idx_data, data in enumerate(data_list):
-
-            tmp_rlt = {}
 
             pid = data['id'].split('_')[1]
             nm = data.find('a')['title']
@@ -226,19 +224,11 @@ class InvestingStockInfo():
             comp_financial_url = comp_dir + self.financial_sub
             comp_earnings_url = comp_dir + self.earnings_sub
 
+            df.loc[idx_data] = [pid, self.country, nm, None, None, comp_dir, comp_profile_url, comp_financial_url, comp_earnings_url]
 
-            # 기업 기본정보 저장
-            tmp_rlt['pid'] = pid
-            tmp_rlt['nm'] = nm
-            tmp_rlt['url'] = comp_dir
-            tmp_rlt['profile_url'] = comp_profile_url
-            tmp_rlt['financial_url'] = comp_financial_url
-            tmp_rlt['earnings_url'] = comp_earnings_url
-            results.append(tmp_rlt)
+        return df
 
-        return results
-
-    def GetProfileData(self, url):
+    def GetProfileData(self, url, df):
         self.wd.get('%s' % (url))
 
         html = self.wd.page_source
@@ -246,16 +236,15 @@ class InvestingStockInfo():
         tbody = bs.find('div', {'class': 'companyProfileHeader'})
         rows = tbody.findAll('div')
 
-        result = {}
         for idx, row in enumerate(rows):
             if idx == 0:
-                result['industry'] = row.text.replace('Industry', '')
+                df['industry'] = row.text.replace('Industry', '')
             elif idx == 1:
-                result['sector'] = row.text.replace('Sector', '')
+                df['sector'] = row.text.replace('Sector', '')
             else:
                 break
 
-        return result
+        return df
 
     def GetFinancialData(self, url, annual=True, quaterly=True, t_gap=0.5):
         self.wd.get('%s' % (url))

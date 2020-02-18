@@ -78,15 +78,19 @@ class DB(object):
 
             return False
 
-    def select_query(self, query):
+    def select_query(self, query, columns=None):
         sql = query
         sql_arg = None
 
         self.cursor.execute(sql, sql_arg)
 
         data = self.cursor.fetchall()
+        df = pd.DataFrame(data)
 
-        return pd.DataFrame(data)
+        if columns != None:
+            df.columns = columns
+
+        return df
 
     def execute_query(self, sql, sql_arg):
 

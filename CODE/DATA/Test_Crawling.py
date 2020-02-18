@@ -76,9 +76,9 @@ def CrawlEconomicEventValues(t_gap=0.2, loop_num=3):
 # 각 국가별 지수 및 원자재 근월물 가격 데이터 크롤링
 def CrawlHistoricalPrices(satrt_date, end_date):
 
-    master_list = db.select_query("SELECT cd, nm_us, curr_id"
-                                  "  FROM index_master")
-    master_list.columns = ['cd', 'nm_us', 'curr_id']
+    sql = sql="SELECT cd, nm_us, curr_id" \
+              "  FROM index_master"
+    master_list = db.select_query(query=sql, columns=['cd', 'nm_us', 'curr_id'])
 
     for master in master_list.iterrows():
         # first set Headers and FormData
