@@ -16,20 +16,23 @@ from CRAWLING import Investing
 
 
 do_profile = True
-do_financial = True
-do_earnings = True
+do_financial = False
+do_earnings = False
 
 db = DB_Util.DB()
 db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", password="ryumaria")
 
 
-options = [['KR', 'KOSPI 200'], ['KR', 'KOSDAQ 150'], ['US', 'S&P 500'], ['US', 'Nasdaq 100'], ]
+#options = [['KR', 'KOSPI 200'], ['KR', 'KOSDAQ 150'], ['US', 'S&P 500'], ['US', 'Nasdaq 100'], ]
+options = [['US', 'S&P 500']]
 
 obj = Investing.InvestingStockInfo(db)
 obj.Start()
 #time.sleep(15)
 
+stock_list = []
 for idx, option in enumerate(options):
+
     country = option[0]
     group = option[1]
 
@@ -37,7 +40,20 @@ for idx, option in enumerate(options):
 
     comp_info_list = obj.GetCompsInfo(idx)
     for idx_comp, comp_info in enumerate(comp_info_list):
-        print('idx:\t' + str(idx_comp) + '\tpid\t' + comp_info['pid']
+
+        # 요청이 너무 많은 경우 원격 호스트에 의해 강제로 끊는담.
+        # 처리된 종목까지는 패스
+        if option[1] == 'S&P 500' and idx_comp < 312:
+            continue
+        
+        # 동일 종목이 여러 지수에 중복 편입되어 있는 경우 패스
+        if comp_info['pid'] in stock_list:
+            continue
+        else:
+            stock_list.append(comp_info['pid'])        
+        
+        print('idx:\t' + str(idx_comp) + '\tnm\t' + comp_info['nm']
+              + '\tpid\t' + comp_info['pid'] + '\turl\t' + comp_info['url']
               + '\tprofile_url:\t' + comp_info['profile_url']
               + '\tfinancial_url:\t' + comp_info['financial_url']
               + '\tearnings_url:\t' + comp_info['earnings_url'])
@@ -45,6 +61,16 @@ for idx, option in enumerate(options):
         if do_profile == True:
             profile = obj.GetProfileData(comp_info['profile_url'])
             print(profile)
+
+            sql = "INSERT INTO stock_master (pid, country, nm, industry, sector, url, profile_url, financial_url, earnings_url)" \
+                  "VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" \
+                  "ON DUPLICATE KEY UPDATE country='%s', nm='%s', industry='%s', sector='%s', url='%s', profile_url='%s', financial_url='%s', earnings_url='%s'"
+            sql_arg = (comp_info['pid'], option[0], comp_info['nm'], profile['industry'], profile['sector'], comp_info['url'], comp_info['profile_url'], comp_info['financial_url'], comp_info['earnings_url']
+                       , option[0], comp_info['nm'], profile['industry'], profile['sector'], comp_info['url'], comp_info['profile_url'], comp_info['financial_url'], comp_info['earnings_url'])
+            if (db.execute_query(sql, sql_arg) == False):
+                print("stock_master insert error")
+        else:
+            print('DB에서 관련 정보를 받는다.')
 
         if do_financial == True:
             financial = obj.GetFinancialData(comp_info['financial_url'])

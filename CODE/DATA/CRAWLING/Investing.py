@@ -212,7 +212,7 @@ class InvestingStockInfo():
             pid = data['id'].split('_')[1]
             nm = data.find('a')['title']
             comp_sub_dir = data.find('a')['href']
-            print(str(idx_data) + '\t' + pid + '\t' + nm + '\t' + comp_sub_dir)
+            #print(str(idx_data) + '\t' + pid + '\t' + nm + '\t' + comp_sub_dir)
             # continue
 
             last = data.find('td', {'class': 'pid-%s-last' % (pid)}).text
@@ -221,7 +221,7 @@ class InvestingStockInfo():
             pcp = data.find('td', {'class': 'pid-%s-pcp' % (pid)}).text
             turnover = data.find('td', {'class': 'pid-%s-turnover' % (pid)}).text
 
-            comp_dir = self.root_dir + '/' + comp_sub_dir
+            comp_dir = self.root_dir + comp_sub_dir
             comp_profile_url = comp_dir + self.profile_sub
             comp_financial_url = comp_dir + self.financial_sub
             comp_earnings_url = comp_dir + self.earnings_sub
@@ -230,6 +230,7 @@ class InvestingStockInfo():
             # 기업 기본정보 저장
             tmp_rlt['pid'] = pid
             tmp_rlt['nm'] = nm
+            tmp_rlt['url'] = comp_dir
             tmp_rlt['profile_url'] = comp_profile_url
             tmp_rlt['financial_url'] = comp_financial_url
             tmp_rlt['earnings_url'] = comp_earnings_url
