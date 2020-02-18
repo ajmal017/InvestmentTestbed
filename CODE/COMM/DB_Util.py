@@ -92,6 +92,7 @@ class DB(object):
 
         try:
             # 수행
+            #print(sql % sql_arg)
             self.cursor.execute(sql % sql_arg)
 
             # DB 반영
