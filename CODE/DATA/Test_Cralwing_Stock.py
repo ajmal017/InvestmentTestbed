@@ -15,6 +15,8 @@ from COMM import DB_Util
 from CRAWLING import Investing
 
 
+do_profile = True
+do_financial = True
 do_earnings = True
 
 db = DB_Util.DB()
@@ -25,7 +27,7 @@ options = [['KR', 'KOSPI 200'], ['KR', 'KOSDAQ 150'], ['US', 'S&P 500'], ['US', 
 
 obj = Investing.InvestingStockInfo(db)
 obj.Start()
-time.sleep(15)
+#time.sleep(15)
 
 for idx, option in enumerate(options):
     country = option[0]
@@ -35,7 +37,18 @@ for idx, option in enumerate(options):
 
     comp_info_list = obj.GetCompsInfo(idx)
     for idx_comp, comp_info in enumerate(comp_info_list):
-        print('idx:\t' + str(idx_comp) + '\tpid\t' + comp_info['pid'] + '\turl:\t' + comp_info['earnings_url'])
+        print('idx:\t' + str(idx_comp) + '\tpid\t' + comp_info['pid']
+              + '\tprofile_url:\t' + comp_info['profile_url']
+              + '\tfinancial_url:\t' + comp_info['financial_url']
+              + '\tearnings_url:\t' + comp_info['earnings_url'])
+
+        if do_profile == True:
+            profile = obj.GetProfileData(comp_info['profile_url'])
+            print(profile)
+
+        if do_financial == True:
+            financial = obj.GetFinancialData(comp_info['financial_url'])
+            print(financial)
 
         if do_earnings == True:
             earnings = obj.GetEarningsData(comp_info['earnings_url'], t_gap=0.1, loop_num=1)
@@ -43,6 +56,6 @@ for idx, option in enumerate(options):
 
         time.sleep(0.5)
 
-        break
+        #break
 
 db.disconnect()

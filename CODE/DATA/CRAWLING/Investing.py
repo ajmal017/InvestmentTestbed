@@ -181,7 +181,8 @@ class InvestingStockInfo():
         self.country_equity_dir = {'KR': '%s/south-korea' % (self.equity_dir), 'US': '%s/united-states' % (self.equity_dir)}
 
         self.earnings_sub = '-earnings'
-        self.profile_sub = '-company - profile'
+        self.profile_sub = '-company-profile'
+        self.financial_sub = '-financial-summary'
 
     def SetCountryGroupInfo(self, country, group):
         self.country = country
@@ -195,12 +196,6 @@ class InvestingStockInfo():
     def GetCompsInfo(self, cnt=0):
 
         self.wd.get(self.country_equity_dir[self.country])
-        '''
-        if cnt == 0:
-            time.sleep(30)
-        else:
-            time.sleep(10)
-        '''
 
         # 그룹내 기들의 기본 데이터를 출력
         results = []
@@ -227,15 +222,111 @@ class InvestingStockInfo():
             turnover = data.find('td', {'class': 'pid-%s-turnover' % (pid)}).text
 
             comp_dir = self.root_dir + '/' + comp_sub_dir
+            comp_profile_url = comp_dir + self.profile_sub
+            comp_financial_url = comp_dir + self.financial_sub
             comp_earnings_url = comp_dir + self.earnings_sub
+
 
             # 기업 기본정보 저장
             tmp_rlt['pid'] = pid
             tmp_rlt['nm'] = nm
+            tmp_rlt['profile_url'] = comp_profile_url
+            tmp_rlt['financial_url'] = comp_financial_url
             tmp_rlt['earnings_url'] = comp_earnings_url
             results.append(tmp_rlt)
 
         return results
+
+    def GetProfileData(self, url):
+        self.wd.get('%s' % (url))
+
+        html = self.wd.page_source
+        bs = BeautifulSoup(html, 'html.parser')
+        tbody = bs.find('div', {'class': 'companyProfileHeader'})
+        rows = tbody.findAll('div')
+
+        result = {}
+        for idx, row in enumerate(rows):
+            if idx == 0:
+                result['industry'] = row.text.replace('Industry', '')
+            elif idx == 1:
+                result['sector'] = row.text.replace('Sector', '')
+            else:
+                break
+
+        return result
+
+    def GetFinancialData(self, url, annual=True, quaterly=True, t_gap=0.5):
+        self.wd.get('%s' % (url))
+
+        annual_result = None
+        quaterly_result = None
+
+        # Annual 데이터
+        if annual == True:
+            annual_result = {}
+
+            result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[1]')
+            result.click()
+            time.sleep(t_gap)
+
+            html = self.wd.page_source
+            bs = BeautifulSoup(html, 'html.parser')
+            tables = bs.findAll('table', {'class': 'genTbl openTbl companyFinancialSummaryTbl'})
+            for table in tables:
+                header = table.find('tr').findAll('th')
+                key = None
+                for idx_col, column in enumerate(header):
+                    if idx_col == 0:
+                        key = column.text
+                        annual_result[key] = []
+                    else:
+                        annual_result[key].append(column.text)
+
+                tbodys = table.find('tbody').findAll('tr')
+                for tbody in tbodys:
+                    value = tbody.findAll('td')
+                    key = None
+                    for idx_col, column in enumerate(value):
+                        if idx_col == 0:
+                            key = column.text
+                            annual_result[key] = []
+                        else:
+                            annual_result[key].append(column.text)
+
+        # Quarterly 데이터
+        if quaterly == True:
+            quaterly_result = {}
+
+            result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[2]')
+            result.click()
+            time.sleep(t_gap)
+
+            html = self.wd.page_source
+            bs = BeautifulSoup(html, 'html.parser')
+            tables = bs.findAll('table', {'class': 'genTbl openTbl companyFinancialSummaryTbl'})
+            for table in tables:
+                header = table.find('tr').findAll('th')
+                key = None
+                for idx_col, column in enumerate(header):
+                    if idx_col == 0:
+                        key = column.text
+                        quaterly_result[key] = []
+                    else:
+                        quaterly_result[key].append(column.text)
+
+                tbodys = table.find('tbody').findAll('tr')
+                for tbody in tbodys:
+                    value = tbody.findAll('td')
+                    key = None
+                    for idx_col, column in enumerate(value):
+                        if idx_col == 0:
+                            key = column.text
+                            quaterly_result[key] = []
+                        else:
+                            quaterly_result[key].append(column.text)
+
+        return [annual_result, quaterly_result]
 
     def GetEarningsData(self, url, t_gap=0.5, loop_num=0):
         self.wd.get('%s' % (url))
@@ -336,7 +427,7 @@ class InvestingEconomicEventCalendar():
             self.wd = webdriver.Chrome('%s/chromedriver' % (os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))), chrome_options=self.options)
 
         self.wd.get('https://www.investing.com')
-        time.sleep(60)
+        time.sleep(5)
 
     def Start(self, t_gap=0.2, loop_num=float('inf')):
         startTime = timeit.default_timer()
