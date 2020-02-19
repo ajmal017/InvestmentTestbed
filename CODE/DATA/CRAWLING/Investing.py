@@ -247,13 +247,14 @@ class InvestingStockInfo():
         return df
 
     def GetFinancialData(self, url, annual=True, quaterly=True, t_gap=0.5):
-        self.wd.get('%s' % (url))
 
         annual_result = None
         quaterly_result = None
 
         # Annual 데이터
         if annual == True:
+            self.wd.get('%s' % (url))
+
             annual_result = {}
 
             result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[1]')
@@ -264,14 +265,26 @@ class InvestingStockInfo():
             bs = BeautifulSoup(html, 'html.parser')
             tables = bs.findAll('table', {'class': 'genTbl openTbl companyFinancialSummaryTbl'})
             for table in tables:
-                header = table.find('tr').findAll('th')
+                header = table.find('thead').findAll('tr')
+
+                dates = header[0].findAll('th')
                 key = None
-                for idx_col, column in enumerate(header):
+                for idx_col, column in enumerate(dates):
                     if idx_col == 0:
                         key = column.text
                         annual_result[key] = []
                     else:
                         annual_result[key].append(column.text)
+
+                if len(header) > 1:
+                    terms = header[1].findAll('td')
+                    key = None
+                    for idx_col, column in enumerate(terms):
+                        if idx_col == 0:
+                            key = column.text
+                            annual_result[key] = []
+                        else:
+                            annual_result[key].append(column.text)
 
                 tbodys = table.find('tbody').findAll('tr')
                 for tbody in tbodys:
@@ -284,8 +297,17 @@ class InvestingStockInfo():
                         else:
                             annual_result[key].append(column.text)
 
+            for idx_cal, cal in enumerate(annual_result['Period Ending:']):
+                cal = cal.replace(',', '').split()
+                annual_result['Period Ending:'][idx_cal] = str(date(int(cal[2]), calendar_map[cal[0]], int(cal[1])))
+
+            for idx_cal, cal in enumerate(annual_result['Period Length:']):
+                annual_result['Period Length:'][idx_cal] = int(cal.replace(' Months', ''))
+
         # Quarterly 데이터
         if quaterly == True:
+            self.wd.get('%s' % (url))
+
             quaterly_result = {}
 
             result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[2]')
@@ -296,14 +318,26 @@ class InvestingStockInfo():
             bs = BeautifulSoup(html, 'html.parser')
             tables = bs.findAll('table', {'class': 'genTbl openTbl companyFinancialSummaryTbl'})
             for table in tables:
-                header = table.find('tr').findAll('th')
+                header = table.find('thead').findAll('tr')
+
+                dates = header[0].findAll('th')
                 key = None
-                for idx_col, column in enumerate(header):
+                for idx_col, column in enumerate(dates):
                     if idx_col == 0:
                         key = column.text
                         quaterly_result[key] = []
                     else:
                         quaterly_result[key].append(column.text)
+
+                if len(header) > 1:
+                    term = header[1].findAll('td')
+                    key = None
+                    for idx_col, column in enumerate(term):
+                        if idx_col == 0:
+                            key = column.text
+                            quaterly_result[key] = []
+                        else:
+                            quaterly_result[key].append(column.text)
 
                 tbodys = table.find('tbody').findAll('tr')
                 for tbody in tbodys:
@@ -316,7 +350,14 @@ class InvestingStockInfo():
                         else:
                             quaterly_result[key].append(column.text)
 
-        return [annual_result, quaterly_result]
+            for idx_cal, cal in enumerate(quaterly_result['Period Ending:']):
+                cal = cal.replace(',', '').split()
+                quaterly_result['Period Ending:'][idx_cal] = str(date(int(cal[2]), calendar_map[cal[0]], int(cal[1])))
+
+            for idx_cal, cal in enumerate(quaterly_result['Period Length:']):
+                quaterly_result['Period Length:'][idx_cal] = int(cal.replace(' Months', ''))
+
+        return {'annual': pd.DataFrame(annual_result), 'quaterly': pd.DataFrame(quaterly_result)}
 
     def GetEarningsData(self, url, t_gap=0.5, loop_num=0):
         self.wd.get('%s' % (url))
