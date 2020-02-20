@@ -97,7 +97,7 @@ for idx, option in enumerate(options):
         for idx_comp, comp_info in comp_info_list.iterrows():
             '''
             # 정상 처리된 종목까지는 패스
-            if idx_comp < 727:
+            if idx_comp < 557:
                 continue
             '''
             print("%s: %s, %s, %s" % (idx_comp, comp_info['pid'], comp_info['nm'], comp_info['financial_url']))
@@ -142,12 +142,21 @@ for idx, option in enumerate(options):
 
             time.sleep(loop_sleep_term)
 
+        # DB에서 리스트를 가지고 온 경우 그룹 리스트를 반복할 필요 없음
+        if do_profile == False:
+            break
+
     if do_earnings == True:
         for idx_comp, comp_info in comp_info_list.iterrows():
             earnings = obj.GetEarningsData(comp_info['earnings_url'], t_gap=0.1, loop_num=1)
             print(earnings)
 
             time.sleep(loop_sleep_term)
+
+        # DB에서 리스트를 가지고 온 경우 그룹 리스트를 반복할 필요 없음
+        if do_profile == False:
+            break
+
     #break
 
 db.disconnect()
