@@ -8,6 +8,7 @@ import warnings
 import platform
 import time
 import pandas as pd
+import numpy as np
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 warnings.filterwarnings("ignore")
@@ -94,12 +95,30 @@ for idx, option in enumerate(options):
 
     if do_financial == True:
         for idx_comp, comp_info in comp_info_list.iterrows():
+            '''
+            # 정상 처리된 종목까지는 패스
+            if idx_comp < 727:
+                continue
+            '''
+            print("%s: %s, %s, %s" % (idx_comp, comp_info['pid'], comp_info['nm'], comp_info['financial_url']))
+
             financials = obj.GetFinancialData(comp_info['financial_url'])
             #print(financials)
 
+            component_list = ['Period Ending:', 'Period Length:', 'Total Revenue', 'Gross Profit', 'Operating Income', 'Net Income', 'Total Assets', 'Total Liabilities', 'Total Equity', 'Cash From Operating Activities','Cash From Investing Activities', 'Cash From Financing Activities', 'Net Change in Cash']
             for term_type in financials:
                 for idx_financial, financial_info in financials[term_type].iterrows():
                     #print(term_type + str(financial_info))
+
+                    # 항목이 없는 경우 NULL로 채워야 sql 오류 없음
+                    missing_components = set(component_list) - set(financial_info.index)
+                    for component in missing_components:
+                        financial_info[component] = 'NULL'
+
+                    # 항목의 값이 없어 blank인 경우 NULL로 채워야 sql 오류 없음
+                    for idx_null in np.where(financial_info.values == ''):
+                        financial_info[idx_null] = 'NULL'
+
                     try:
                         sql = "INSERT INTO stock_financial (pid, date, term_type, period" \
                               ", total_revenue, gross_profit, operating_income, net_income" \
@@ -133,23 +152,3 @@ for idx, option in enumerate(options):
 
 db.disconnect()
 
-"""
-CREATE TABLE `stock_financial` (
-  `pid` varchar(16) NOT NULL,
-  `date` varchar(10) NOT NULL,
-  `term_type` varchar(1) NOT NULL,
-  `period` int(8) NOT NULL,
-  `total_revenue` decimal(16,4) DEFAULT NULL COMMENT 'Income Statement',
-  `gross_profit` decimal(16,4) DEFAULT NULL COMMENT 'Income Statement',
-  `operating_income` decimal(16,4) DEFAULT NULL COMMENT 'Income Statement',
-  `net_income` decimal(16,4) DEFAULT NULL COMMENT 'Income Statement',
-  `total_assets` decimal(16,4) DEFAULT NULL COMMENT 'Balance Sheet',
-  `total_liabilities` decimal(16,4) DEFAULT NULL COMMENT 'Balance Sheet',
-  `total_equity` decimal(16,4) DEFAULT NULL COMMENT 'Balance Sheet',
-  `cash_from_operating_activities` decimal(16,4) DEFAULT NULL COMMENT 'Cash Flow Statement',
-  `cash_from_investing_activities` decimal(16,4) DEFAULT NULL COMMENT 'Cash Flow Statement',
-  `cash_from_financing_activities` decimal(16,4) DEFAULT NULL COMMENT 'Cash Flow Statement',
-  `net_change_in_cash` decimal(16,4) DEFAULT NULL COMMENT 'Cash Flow Statement',
-  PRIMARY KEY (`pid`,`date`,`term_type`,`period`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8
-"""

@@ -257,7 +257,10 @@ class InvestingStockInfo():
 
             annual_result = {}
 
-            result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[1]')
+            try:
+                result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[1]')
+            except:
+                result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[10] / a[1]')
             result.click()
             time.sleep(t_gap)
 
@@ -310,7 +313,11 @@ class InvestingStockInfo():
 
             quaterly_result = {}
 
-            result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[2]')
+            try:
+                result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[2]')
+            except:
+                result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[10] / a[2]')
+
             result.click()
             time.sleep(t_gap)
 
