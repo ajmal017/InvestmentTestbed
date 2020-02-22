@@ -180,9 +180,10 @@ class InvestingStockInfo():
         self.equity_dir = '%s/equities' % (self.root_dir)
         self.country_equity_dir = {'KR': '%s/south-korea' % (self.equity_dir), 'US': '%s/united-states' % (self.equity_dir)}
 
-        self.earnings_sub = '-earnings'
         self.profile_sub = '-company-profile'
         self.financial_sub = '-financial-summary'
+        self.earnings_sub = '-earnings'
+        self.dividends_sub = '-dividends'
 
     def SetCountryGroupInfo(self, country, group):
         self.country = country
@@ -223,8 +224,9 @@ class InvestingStockInfo():
             comp_profile_url = comp_dir + self.profile_sub
             comp_financial_url = comp_dir + self.financial_sub
             comp_earnings_url = comp_dir + self.earnings_sub
+            comp_dividends_url = comp_dir + self.dividends_sub
 
-            df.loc[idx_data] = [pid, self.country, nm, None, None, comp_dir, comp_profile_url, comp_financial_url, comp_earnings_url]
+            df.loc[idx_data] = [pid, self.country, nm, None, None, comp_dir, comp_profile_url, comp_financial_url, comp_earnings_url, comp_dividends_url]
 
         return df
 
@@ -317,7 +319,6 @@ class InvestingStockInfo():
                 result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[2]')
             except:
                 result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[10] / a[2]')
-
             result.click()
             time.sleep(t_gap)
 
@@ -366,7 +367,7 @@ class InvestingStockInfo():
 
         return {'annual': pd.DataFrame(annual_result), 'quaterly': pd.DataFrame(quaterly_result)}
 
-    def GetEarningsData(self, url, t_gap=0.5, loop_num=0):
+    def GetEarningsData(self, url, loop_num=0, t_gap=0.5):
         self.wd.get('%s' % (url))
 
         results = []
@@ -406,6 +407,52 @@ class InvestingStockInfo():
                     results.append({'release_date': release_date, 'period_end': period_end
                                        , 'eps_bold': eps_bold[0]*eps_bold[1], 'eps_fore': eps_fore[0]*eps_fore[1]
                                        , 'revenue_bold': revenue_bold[0]*revenue_bold[1], 'revenue_fore': revenue_fore[0]*revenue_fore[1]})
+
+                return pd.DataFrame(results)
+
+    def GetDividendsData(self, url, loop_num=0, t_gap=0.5):
+        self.wd.get('%s' % (url))
+
+        results = []
+        loop_cnt = 0
+        for page in count(1):
+            try:
+                # 정해진 횟수만 크롤링
+                if loop_cnt >= loop_num:
+                    raise Exception('loop_cnt: ' % loop_cnt)
+                else:
+                    loop_cnt += 1
+
+                script = 'void(0)'  # 사용하는 페이지를 이동시키는 js 코드
+                # self.wd.execute_script(script)  # js 실행
+                result = self.wd.find_element_by_xpath('// *[ @ id = "showMoreDividendsHistory"] / text()')
+                result.click()
+
+                time.sleep(t_gap)  # 크롤링 로직을 수행하기 위해 5초정도 쉬어준다.
+            except:
+                # print('error: %s' % str(page))
+
+                try:
+                    html = self.wd.page_source
+                    bs = BeautifulSoup(html, 'html.parser')
+                    tbody = bs.find('table', {'class':'genTbl closedTbl dividendTbl'}).find('tbody')
+                    rows = tbody.findAll('tr')
+
+                    for row in rows:
+                        tmp_tbl = row.findAll('td')
+                        ex_date = tmp_tbl[0].text.replace(',', '').split()
+                        ex_date = str(date(int(ex_date[2]), calendar_map[ex_date[0]], int(ex_date[1])))
+                        dividend = getRealValue(tmp_tbl[1].text)
+                        period = tmp_tbl[2].find('span')['title']
+                        payment_date = tmp_tbl[3].text.replace(',', '').split()
+                        payment_date = str(date(int(payment_date[2]), calendar_map[payment_date[0]], int(payment_date[1])))
+                        rate = getRealValue(tmp_tbl[4].text)
+
+                        results.append({'ex_date': ex_date, 'dividend': round(dividend[0]*dividend[1], 4)
+                                           , 'period': period, 'payment_date': payment_date
+                                           , 'yield': round(rate[0]*rate[1], 4)})
+                except:
+                    print('No dividends Data.')
 
                 return pd.DataFrame(results)
 

@@ -19,40 +19,40 @@ from CRAWLING import Investing
 loop_sleep_term = 1
 do_profile = False
 do_financial = False
-do_earnings = True
+do_earnings = False
+do_dividends = True
 
 db = DB_Util.DB()
 db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", password="ryumaria")
 
 
 options = [['KR', 'KOSPI 200'], ['KR', 'KOSDAQ 150'], ['US', 'S&P 500'], ['US', 'Nasdaq 100'], ]
+options = [['US', 'S&P 500'], ['US', 'Nasdaq 100'], ]
 
 obj = Investing.InvestingStockInfo(db)
 obj.Start()
 #time.sleep(15)
 
-stocks_list = []
-for idx, option in enumerate(options):
+# 주식의 기본 정보 크롤링
+if do_profile == True:
 
-    country = option[0]
-    group = option[1]
-    
-    # 종목리스트 생성을 위한 국가별 대표지수 설정
-    obj.SetCountryGroupInfo(country, group)
+    stocks_list = []
+    for idx, option in enumerate(options):
+        country = option[0]
+        group = option[1]
 
-    # 주식의 기본 정보 크롤링
-    comp_info_list = None
-    if do_profile == True:
+        # 종목리스트 생성을 위한 국가별 대표지수 설정
+        obj.SetCountryGroupInfo(country, group)
 
         # 대표지수에 포함되어 있는 종목 리스트 및 필요 정보 크롤링
-        columns = ['pid', 'country', 'nm', 'industry', 'sector', 'url', 'profile_url', 'financial_url', 'earnings_url']
+        columns = ['pid', 'country', 'nm', 'industry', 'sector', 'url', 'profile_url', 'financial_url', 'earnings_url', 'dividends_url']
         comp_info_list = obj.GetCompsInfo(columns, idx)
 
         for idx_comp, comp_info in comp_info_list.iterrows():
             '''
             # 요청이 너무 많은 경우 원격 호스트에 의해 강제로 끊는담.
             # 처리된 종목까지는 패스
-            if option[1] == 'S&P 500' and idx_comp < 441:
+            if option[1] == 'S&P 500' and idx_comp < 40:
                 continue
             '''
             # 동일 종목이 기존에 처리된 지수에 중복 편입되어 있는 경우 패스
@@ -61,17 +61,18 @@ for idx, option in enumerate(options):
                 continue
             else:
                 stocks_list.append(comp_info['pid'])
-            
+                print("%s: %s, %s, %s, %s" % (idx_comp, comp_info['pid'], comp_info['nm'], country, group))
+
             # 종목의 산업과 업종 정보 크롤링
             comp_info = obj.GetProfileData(comp_info['profile_url'], comp_info)
-            #print(profile)
+            #print(comp_info)
 
             # 크롤링된 종목 정보를 DB 저장
-            sql = "INSERT INTO stock_master (pid, country, nm, industry, sector, url, profile_url, financial_url, earnings_url)" \
-                  "VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" \
-                  "ON DUPLICATE KEY UPDATE country='%s', nm='%s', industry='%s', sector='%s', url='%s', profile_url='%s', financial_url='%s', earnings_url='%s'"
-            sql_arg = (comp_info['pid'], option[0], comp_info['nm'], comp_info['industry'], comp_info['sector'], comp_info['url'], comp_info['profile_url'], comp_info['financial_url'], comp_info['earnings_url']
-                       , option[0], comp_info['nm'], comp_info['industry'], comp_info['sector'], comp_info['url'], comp_info['profile_url'], comp_info['financial_url'], comp_info['earnings_url'])
+            sql = "INSERT INTO stock_master (pid, country, nm, industry, sector, url, profile_url, financial_url, earnings_url, dividends_url)" \
+                  "VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')" \
+                  "ON DUPLICATE KEY UPDATE country='%s', nm='%s', industry='%s', sector='%s', url='%s', profile_url='%s', financial_url='%s', earnings_url='%s', dividends_url='%s'"
+            sql_arg = (comp_info['pid'], option[0], comp_info['nm'], comp_info['industry'], comp_info['sector'], comp_info['url'], comp_info['profile_url'], comp_info['financial_url'], comp_info['earnings_url'], comp_info['dividends_url']
+                       , option[0], comp_info['nm'], comp_info['industry'], comp_info['sector'], comp_info['url'], comp_info['profile_url'], comp_info['financial_url'], comp_info['earnings_url'], comp_info['dividends_url'])
             if (db.execute_query(sql, sql_arg) == False):
                 print("stock_master insert error(%s: %s)" % (comp_info['pid'], comp_info['nm']))
             '''
@@ -85,14 +86,14 @@ for idx, option in enumerate(options):
             '''
             time.sleep(loop_sleep_term)
 
-    # 사전에 크롤링된 종목 정보를 DB에서 가져옴
-    else:
-        sql = "SELECT pid, country, nm, industry, sector, url, profile_url, financial_url, earnings_url" \
-              "  FROM stock_master"
-        columns = ['pid', 'country', 'nm', 'industry', 'sector', 'url', 'profile_url', 'financial_url', 'earnings_url']
-        comp_info_list = db.select_query(query=sql, columns=columns)
+# 사전에 크롤링된 종목 정보를 DB에서 가져옴
+else:
+    sql = "SELECT pid, country, nm, industry, sector, url, profile_url, financial_url, earnings_url, dividends_url" \
+          "  FROM stock_master"
+    columns = ['pid', 'country', 'nm', 'industry', 'sector', 'url', 'profile_url', 'financial_url', 'earnings_url', 'dividends_url']
+    comp_info_list = db.select_query(query=sql, columns=columns)
 
-
+    # financial 정보 크롤링(anuual: 4년, qualterly: 4분기)
     if do_financial == True:
         for idx_comp, comp_info in comp_info_list.iterrows():
             '''
@@ -142,18 +143,20 @@ for idx, option in enumerate(options):
 
             time.sleep(loop_sleep_term)
 
-        # DB에서 리스트를 가지고 온 경우 그룹 리스트를 반복할 필요 없음
-        if do_profile == False:
-            break
-
+    # 실적(어닝) 정보 크롤링
     if do_earnings == True:
         for idx_comp, comp_info in comp_info_list.iterrows():
+            '''
+            # 정상 처리된 종목까지는 패스
+            if idx_comp < 423:
+                continue
+            '''
             print("%s: %s, %s, %s" % (idx_comp, comp_info['pid'], comp_info['nm'], comp_info['earnings_url']))
 
             earnings_list = obj.GetEarningsData(comp_info['earnings_url'], loop_num=2)
-            #print(earnings)
+            #print(earnings_list)
 
-            for idx_earning, earnings_info in earnings_list.iterrows():
+            for idx_earnings, earnings_info in earnings_list.iterrows():
                 #print(earnings_info)
 
                 # 항목의 값이 없어 blank인 경우 NULL로 채워야 sql 오류 없음
@@ -175,11 +178,37 @@ for idx, option in enumerate(options):
 
             time.sleep(loop_sleep_term)
 
-        # DB에서 리스트를 가지고 온 경우 그룹 리스트를 반복할 필요 없음
-        if do_profile == False:
-            break
+    # 배당 지급 정보 크롤링
+    if do_dividends == True:
+        for idx_comp, comp_info in comp_info_list.iterrows():
+            '''
+            # 정상 처리된 종목까지는 패스
+            if idx_comp < 423:
+                continue
+            '''
+            print("%s: %s, %s, %s" % (idx_comp, comp_info['pid'], comp_info['nm'], comp_info['dividends_url']))
 
-    #break
+            dividends_list = obj.GetDividendsData(comp_info['dividends_url'], loop_num=2)
+            #print(dividends_list)
+
+            for idx_dividends, dividends_info in dividends_list.iterrows():
+                #print(dividends_info)
+
+                try:
+                    sql = "INSERT INTO stock_dividends (pid, ex_date, payment_date, dividend, yield, period)" \
+                          "VALUES ('%s', '%s', '%s', %s, %s, '%s')" \
+                          "ON DUPLICATE KEY UPDATE payment_date='%s', dividend=%s, yield=%s, period='%s'"
+                    sql_arg = (comp_info['pid'], dividends_info['ex_date'], dividends_info['payment_date']
+                               , dividends_info['dividend'], dividends_info['yield'], dividends_info['period']
+                               , dividends_info['payment_date'], dividends_info['dividend'], dividends_info['yield'], dividends_info['period'])
+                    if (db.execute_query(sql, sql_arg) == False):
+                        print("stock_dividends insert error(%s: %s, %s, %s, %s)" % (comp_info['pid'], comp_info['nm'], dividends_info['ex_date'], dividends_info['yield'], dividends_info['period']))
+
+                except:
+                    print("stock_dividends insert error(%s: %s, %s, %s, %s)" % (comp_info['pid'], comp_info['nm'], dividends_info['ex_date'], dividends_info['yield'], dividends_info['period']))
+
+            time.sleep(loop_sleep_term)
+
 
 db.disconnect()
 
