@@ -404,10 +404,10 @@ class InvestingStockInfo():
                     revenue_fore = getRealValue(tmp_tbl[5].text.split('/')[1])
 
                     results.append({'release_date': release_date, 'period_end': period_end
-                                       , 'eps_bold': eps_bold, 'eps_fore': eps_fore
-                                       , 'revenue_bold': revenue_bold, 'revenue_fore': revenue_fore})
+                                       , 'eps_bold': eps_bold[0]*eps_bold[1], 'eps_fore': eps_fore[0]*eps_fore[1]
+                                       , 'revenue_bold': revenue_bold[0]*revenue_bold[1], 'revenue_fore': revenue_fore[0]*revenue_fore[1]})
 
-                return results
+                return pd.DataFrame(results)
 
     def SelectGroup(self):
 

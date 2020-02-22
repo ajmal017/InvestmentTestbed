@@ -18,8 +18,8 @@ from CRAWLING import Investing
 
 loop_sleep_term = 1
 do_profile = False
-do_financial = True
-do_earnings = False
+do_financial = False
+do_earnings = True
 
 db = DB_Util.DB()
 db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", password="ryumaria")
@@ -148,8 +148,30 @@ for idx, option in enumerate(options):
 
     if do_earnings == True:
         for idx_comp, comp_info in comp_info_list.iterrows():
-            earnings = obj.GetEarningsData(comp_info['earnings_url'], t_gap=0.1, loop_num=1)
-            print(earnings)
+            print("%s: %s, %s, %s" % (idx_comp, comp_info['pid'], comp_info['nm'], comp_info['earnings_url']))
+
+            earnings_list = obj.GetEarningsData(comp_info['earnings_url'], loop_num=2)
+            #print(earnings)
+
+            for idx_earning, earnings_info in earnings_list.iterrows():
+                #print(earnings_info)
+
+                # 항목의 값이 없어 blank인 경우 NULL로 채워야 sql 오류 없음
+                for idx_null in np.where(earnings_info.values == 0.0):
+                    earnings_info[idx_null] = 'NULL'
+
+                try:
+                    sql = "INSERT INTO stock_earnings (pid, date, period_end, eps_bold, eps_fore, revenue_bold, revenue_fore)" \
+                          "VALUES ('%s', '%s', '%s', %s, %s, %s, %s)" \
+                          "ON DUPLICATE KEY UPDATE period_end='%s', eps_bold=%s, eps_fore=%s, revenue_bold=%s, revenue_fore=%s"
+                    sql_arg = (comp_info['pid'], earnings_info['release_date'], earnings_info['period_end']
+                               , earnings_info['eps_bold'], earnings_info['eps_fore'], earnings_info['revenue_bold'], earnings_info['revenue_fore']
+                               , earnings_info['period_end'], earnings_info['eps_bold'], earnings_info['eps_fore'], earnings_info['revenue_bold'], earnings_info['revenue_fore'])
+                    if (db.execute_query(sql, sql_arg) == False):
+                        print("stock_earnings insert error(%s: %s, %s, %s, %s)" % (comp_info['pid'], comp_info['nm'], earnings_info['release_date'], earnings_info['period_end'], comp_info['earnings_url']))
+
+                except:
+                    print("stock_earnings insert error(%s: %s, %s, %s, %s)" % (comp_info['pid'], comp_info['nm'], earnings_info['release_date'], earnings_info['period_end'], comp_info['earnings_url']))
 
             time.sleep(loop_sleep_term)
 
