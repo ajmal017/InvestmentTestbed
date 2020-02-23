@@ -224,11 +224,11 @@ else:
 
         start_date = '1/1/2000'
         for idx_comp, comp_info in comp_info_list.iterrows():
-
+            '''
             # 정상 처리된 종목까지는 패스
-            if idx_comp < 139:
+            if idx_comp < 125:
                 continue
-
+            '''
             # 기존 저장된 이후 주가부터 금일까지로 기간 설정
             check_sql = "SELECT MAX(date) as max_date FROM stock_price" \
                         " WHERE pid='%s'" % (comp_info['pid'])
