@@ -1,5 +1,3 @@
-CREATE DATABASE  IF NOT EXISTS `investing.com` /*!40100 DEFAULT CHARACTER SET utf8 */;
-USE `investing.com`;
 -- MySQL dump 10.13  Distrib 8.0.12, for macos10.13 (x86_64)
 --
 -- Host: localhost    Database: investing.com
@@ -134,6 +132,8 @@ CREATE TABLE `stock_dividends` (
   `dividend` decimal(16,4) DEFAULT NULL,
   `period` varchar(32) DEFAULT NULL,
   `yield` decimal(16,4) DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL,
+  `update_time` datetime DEFAULT NULL,
   PRIMARY KEY (`pid`,`ex_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -153,6 +153,8 @@ CREATE TABLE `stock_earnings` (
   `eps_fore` decimal(16,4) DEFAULT NULL,
   `revenue_bold` decimal(32,0) DEFAULT NULL,
   `revenue_fore` decimal(32,0) DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL,
+  `update_time` datetime DEFAULT NULL,
   PRIMARY KEY (`pid`,`date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -180,6 +182,8 @@ CREATE TABLE `stock_financial` (
   `cash_from_investing_activities` decimal(16,4) DEFAULT NULL COMMENT 'Cash Flow Statement',
   `cash_from_financing_activities` decimal(16,4) DEFAULT NULL COMMENT 'Cash Flow Statement',
   `net_change_in_cash` decimal(16,4) DEFAULT NULL COMMENT 'Cash Flow Statement',
+  `create_time` datetime DEFAULT NULL,
+  `update_time` datetime DEFAULT NULL,
   PRIMARY KEY (`pid`,`date`,`term_type`,`period`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -202,7 +206,31 @@ CREATE TABLE `stock_master` (
   `financial_url` varchar(128) NOT NULL,
   `earnings_url` varchar(128) NOT NULL,
   `dividends_url` varchar(128) NOT NULL,
+  `price_url` varchar(128) NOT NULL,
+  `create_time` datetime DEFAULT NULL,
+  `update_time` datetime DEFAULT NULL,
   PRIMARY KEY (`pid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `stock_price`
+--
+
+DROP TABLE IF EXISTS `stock_price`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+ SET character_set_client = utf8mb4 ;
+CREATE TABLE `stock_price` (
+  `pid` varchar(16) NOT NULL,
+  `date` char(10) NOT NULL,
+  `close` float NOT NULL,
+  `open` float NOT NULL,
+  `high` float NOT NULL,
+  `low` float NOT NULL,
+  `vol` float DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL,
+  `update_time` datetime DEFAULT NULL,
+  PRIMARY KEY (`pid`,`date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -215,4 +243,4 @@ CREATE TABLE `stock_master` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-02-22 21:47:00
+-- Dump completed on 2020-02-23 22:06:00

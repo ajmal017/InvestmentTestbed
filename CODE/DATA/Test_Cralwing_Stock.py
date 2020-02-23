@@ -226,7 +226,7 @@ else:
         for idx_comp, comp_info in comp_info_list.iterrows():
 
             # 정상 처리된 종목까지는 패스
-            if idx_comp < 94:
+            if idx_comp < 139:
                 continue
 
             # 기존 저장된 이후 주가부터 금일까지로 기간 설정
@@ -257,7 +257,7 @@ else:
                 #ihd.printData()
                 prices = ihd.observations
             else:
-                prices = obj.GetPriceData(comp_info['price_url'], set_calendar=True, start_date=start_date, end_date=end_date, t_gap=1)
+                prices = obj.GetPriceData(comp_info['price_url'], set_calendar=True, start_date=start_date, end_date=end_date, t_gap=1.5)
 
             for price_idx, price in prices.iterrows():
                 try:
