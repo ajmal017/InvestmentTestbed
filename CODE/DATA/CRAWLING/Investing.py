@@ -184,6 +184,7 @@ class InvestingStockInfo():
         self.financial_sub = '-financial-summary'
         self.earnings_sub = '-earnings'
         self.dividends_sub = '-dividends'
+        self.price_sub = '-historical-data'
 
     def SetCountryGroupInfo(self, country, group):
         self.country = country
@@ -225,8 +226,9 @@ class InvestingStockInfo():
             comp_financial_url = comp_dir + self.financial_sub
             comp_earnings_url = comp_dir + self.earnings_sub
             comp_dividends_url = comp_dir + self.dividends_sub
+            comp_price_url = comp_dir + self.price_sub
 
-            df.loc[idx_data] = [pid, self.country, nm, None, None, comp_dir, comp_profile_url, comp_financial_url, comp_earnings_url, comp_dividends_url]
+            df.loc[idx_data] = [pid, self.country, nm, None, None, comp_dir, comp_profile_url, comp_financial_url, comp_earnings_url, comp_dividends_url, comp_price_url]
 
         return df
 
@@ -456,6 +458,41 @@ class InvestingStockInfo():
 
                 return pd.DataFrame(results)
 
+    def GetPriceData(self, url, set_calendar=False, start_date='1/1/2000', end_date='12/31/9999', t_gap=0.5):
+        self.wd.get('%s' % (url))
+
+        if set_calendar == True:
+            calendar = self.wd.find_element_by_xpath('//*[@id="picker"]')
+            self.wd.execute_script("arguments[0].value = '%s - %s';" % (start_date, end_date), calendar)
+            time.sleep(t_gap)  # 크롤링 로직을 수행하기 위해 5초정도 쉬어준다.
+            self.wd.find_element_by_xpath('//*[@id="widget"]').click()
+            time.sleep(t_gap)  # 크롤링 로직을 수행하기 위해 5초정도 쉬어준다.
+            button = self.wd.find_element_by_xpath('//*[@id="applyBtn"]')
+            time.sleep(t_gap)  # 크롤링 로직을 수행하기 위해 5초정도 쉬어준다.
+            self.wd.execute_script("arguments[0].click();", button)
+            time.sleep(t_gap)  # 크롤링 로직을 수행하기 위해 5초정도 쉬어준다.
+
+        html = self.wd.page_source
+        bs = BeautifulSoup(html, 'html.parser')
+        tbody = bs.find('table', {'class': 'genTbl closedTbl historicalTbl'}).find('tbody')
+        rows = tbody.findAll('tr')
+
+        results = []
+        for row in rows:
+            tmp_tbl = row.findAll('td')
+            p_date = tmp_tbl[0].text.replace(',', '').split()
+            p_date = str(date(int(p_date[2]), calendar_map[p_date[0]], int(p_date[1])))
+            price = getRealValue(tmp_tbl[1].text)
+            open = getRealValue(tmp_tbl[2].text)
+            high = getRealValue(tmp_tbl[3].text)
+            low = getRealValue(tmp_tbl[4].text)
+            vol = getRealValue(tmp_tbl[5].text)
+
+            results.append({'Date': p_date, 'Price': price[0]*price[1], 'Open': open[0]*open[1]
+                               , 'High': high[0]*high[1], 'Low': low[0]*low[1], 'Vol.': vol[0]*vol[1]})
+
+        return pd.DataFrame(results)
+
     def SelectGroup(self):
 
         if self.country == 'KR':
@@ -472,7 +509,7 @@ class InvestingStockInfo():
             group_type = self.wd.find_element_by_xpath('//*[@id="all"]')
 
         group_type.click()
-        time.sleep(10)
+        time.sleep(1)
 
     def GetWebDriver(self):
 
@@ -492,6 +529,9 @@ class InvestingStockInfo():
             wd = webdriver.Chrome('%s/chromedriver' % (os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))), chrome_options=options)
 
         return wd
+
+    def Finish(self):
+        self.wd.quit()
 
 
 
