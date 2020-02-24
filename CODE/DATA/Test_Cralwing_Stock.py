@@ -36,14 +36,14 @@ def CrawlingData(options, do_profile, do_financial, do_earnings, do_dividends, d
             obj.SetCountryGroupInfo(country, group)
 
             # 대표지수에 포함되어 있는 종목 리스트 및 필요 정보 크롤링
-            columns = ['pid', 'country', 'nm', 'industry', 'sector', 'url', 'profile_url', 'financial_url', 'earnings_url', 'dividends_url']
+            columns = ['pid', 'country', 'nm', 'industry', 'sector', 'url', 'profile_url', 'financial_url', 'earnings_url', 'dividends_url', 'price_url']
             comp_info_list = obj.GetCompsInfo(columns, idx)
 
             for idx_comp, comp_info in comp_info_list.iterrows():
                 '''
                 # 요청이 너무 많은 경우 원격 호스트에 의해 강제로 끊는담.
                 # 처리된 종목까지는 패스
-                if option[1] == 'S&P 500' and idx_comp < 40:
+                if option[1] == 'KOSPI 200' and idx_comp < 199:
                     continue
                 '''
                 # 동일 종목이 기존에 처리된 지수에 중복 편입되어 있는 경우 패스
@@ -304,7 +304,8 @@ if __name__ == '__main__':
     db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", password="ryumaria")
 
     options = [['KR', 'KOSPI 200'], ['KR', 'KOSDAQ 150'], ['US', 'S&P 500'], ['US', 'Nasdaq 100'], ]
-    CrawlingData(options, do_profile=False, do_financial=False, do_earnings=False, do_dividends=False, do_price_list=[True, False, False], loop_sleep_term=1)
+    #CrawlingData(options, do_profile=False, do_financial=False, do_earnings=False, do_dividends=False, do_price_list=[True, False, False], loop_sleep_term=1)
+    CrawlingData(options, do_profile=True, do_financial=False, do_earnings=False, do_dividends=False, do_price_list=[False, False, False], loop_sleep_term=0)
     GenerateAdditionalData()
 
     db.disconnect()
