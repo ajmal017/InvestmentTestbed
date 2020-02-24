@@ -478,18 +478,21 @@ class InvestingStockInfo():
         rows = tbody.findAll('tr')
 
         results = []
-        for row in rows:
-            tmp_tbl = row.findAll('td')
-            p_date = tmp_tbl[0].text.replace(',', '').split()
-            p_date = str(date(int(p_date[2]), calendar_map[p_date[0]], int(p_date[1])))
-            price = getRealValue(tmp_tbl[1].text)
-            open = getRealValue(tmp_tbl[2].text)
-            high = getRealValue(tmp_tbl[3].text)
-            low = getRealValue(tmp_tbl[4].text)
-            vol = getRealValue(tmp_tbl[5].text)
+        try:
+            for row in rows:
+                tmp_tbl = row.findAll('td')
+                p_date = tmp_tbl[0].text.replace(',', '').split()
+                p_date = str(date(int(p_date[2]), calendar_map[p_date[0]], int(p_date[1])))
+                price = getRealValue(tmp_tbl[1].text)
+                open = getRealValue(tmp_tbl[2].text)
+                high = getRealValue(tmp_tbl[3].text)
+                low = getRealValue(tmp_tbl[4].text)
+                vol = getRealValue(tmp_tbl[5].text)
 
-            results.append({'Date': p_date, 'Price': price[0]*price[1], 'Open': open[0]*open[1]
-                               , 'High': high[0]*high[1], 'Low': low[0]*low[1], 'Vol.': vol[0]*vol[1]})
+                results.append({'Date': p_date, 'Price': price[0]*price[1], 'Open': open[0]*open[1]
+                                   , 'High': high[0]*high[1], 'Low': low[0]*low[1], 'Vol.': vol[0]*vol[1]})
+        except:
+            print('No price Data.')
 
         return pd.DataFrame(results)
 
