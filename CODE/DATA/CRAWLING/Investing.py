@@ -195,7 +195,7 @@ class InvestingStockInfo():
         # 크롬 웹드라이버 실행
         self.wd = self.GetWebDriver()
 
-    def GetCompsInfo(self, columns, cnt=0, t_gap=0.5):
+    def GetCompsInfo(self, columns, cnt=0, t_gap=1.5):
         self.wd.get(self.country_equity_dir[self.country])
         time.sleep(t_gap)
 
@@ -259,7 +259,7 @@ class InvestingStockInfo():
         # Annual 데이터
         if annual == True:
             self.wd.get('%s' % (url))
-            time.sleep(t_gap)
+            time.sleep(t_gap/2)
 
             try:
                 result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[1]')
@@ -315,7 +315,7 @@ class InvestingStockInfo():
         # Quarterly 데이터
         if quaterly == True:
             self.wd.get('%s' % (url))
-            time.sleep(t_gap)
+            time.sleep(t_gap/2)
 
             try:
                 result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[2]')
@@ -461,9 +461,9 @@ class InvestingStockInfo():
 
                 return pd.DataFrame(results)
 
-    def GetPriceData(self, url, set_calendar=False, start_date='1/1/2000', end_date='12/31/9999', t_gap=0.5):
+    def GetPriceData(self, url, set_calendar=False, start_date='1/1/2000', end_date='12/31/9999', t_gap=1.5):
         self.wd.get('%s' % (url))
-        time.sleep(t_gap)
+        time.sleep(t_gap/2)
 
         if set_calendar == True:
             calendar = self.wd.find_element_by_xpath('//*[@id="picker"]')
@@ -515,7 +515,6 @@ class InvestingStockInfo():
                 group_type = self.wd.find_element_by_xpath('//*[@id="20"]')
         else:
             group_type = self.wd.find_element_by_xpath('//*[@id="all"]')
-
         group_type.click()
         time.sleep(t_gap)
 
