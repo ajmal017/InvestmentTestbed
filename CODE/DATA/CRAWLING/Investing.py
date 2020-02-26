@@ -259,7 +259,7 @@ class InvestingStockInfo():
         # Annual 데이터
         if annual == True:
             self.wd.get('%s' % (url))
-            time.sleep(t_gap/2)
+            time.sleep(t_gap)
 
             try:
                 result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[1]')
@@ -315,7 +315,7 @@ class InvestingStockInfo():
         # Quarterly 데이터
         if quaterly == True:
             self.wd.get('%s' % (url))
-            time.sleep(t_gap/2)
+            time.sleep(t_gap)
 
             try:
                 result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[2]')
@@ -463,7 +463,7 @@ class InvestingStockInfo():
 
     def GetPriceData(self, url, set_calendar=False, start_date='1/1/2000', end_date='12/31/9999', t_gap=1.5):
         self.wd.get('%s' % (url))
-        time.sleep(t_gap/2)
+        time.sleep(t_gap)
 
         if set_calendar == True:
             calendar = self.wd.find_element_by_xpath('//*[@id="picker"]')

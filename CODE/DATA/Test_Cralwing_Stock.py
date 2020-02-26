@@ -145,10 +145,10 @@ def CrawlingData(options, do_profile, do_financial, do_earnings, do_dividends, d
             for idx_comp, comp_info in comp_info_list.iterrows():
                 '''
                 # 정상 처리된 종목까지는 패스
-                if idx_comp < 423:
+                if idx_comp < 157:
                     continue
                 '''
-                earnings_list = obj.GetEarningsData(comp_info['earnings_url'], loop_num=2)
+                earnings_list = obj.GetEarningsData(comp_info['earnings_url'], loop_num=2, t_gap=1.5)
                 #print(earnings_list)
 
                 idx_earnings = 0
@@ -215,11 +215,11 @@ def CrawlingData(options, do_profile, do_financial, do_earnings, do_dividends, d
 
             start_date = '1/1/2000'
             for idx_comp, comp_info in comp_info_list.iterrows():
-
+                '''
                 # 정상 처리된 종목까지는 패스
-                if idx_comp < 859:
+                if idx_comp < 129:
                     continue
-
+                '''
                 # 기존 저장된 이후 주가부터 금일까지로 기간 설정
                 check_sql = "SELECT MAX(date) as max_date FROM stock_price" \
                             " WHERE pid='%s'" % (comp_info['pid'])
@@ -311,7 +311,7 @@ if __name__ == '__main__':
     db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", password="ryumaria")
 
     options = [['KR', 'KOSPI 200'], ['KR', 'KOSDAQ 150'], ['US', 'S&P 500'], ['US', 'Nasdaq 100'], ]
-    CrawlingData(options, do_profile=False, do_financial=False, do_earnings=False, do_dividends=False, do_price_list=[True, False, False], loop_sleep_term=0)
+    CrawlingData(options, do_profile=False, do_financial=False, do_earnings=True, do_dividends=False, do_price_list=[False, False, False], loop_sleep_term=0)
     #CrawlingData(options, do_profile=False, do_financial=False, do_earnings=False, do_dividends=True, do_price_list=[False, False, False], loop_sleep_term=0)
     GenerateAdditionalData()
 
