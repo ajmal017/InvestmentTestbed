@@ -289,12 +289,19 @@ def CrawlingData(options, do_profile, do_financial, do_earnings, do_dividends, d
 
 def GenerateAdditionalData():
     # 종목별 마지막 eps 데이터 조회
-    sql_1 = "SELECT c.pid AS pid, d.nm AS nm, c.date AS DATE, c.eps_bold AS eps_bold, c.eps_fore AS eps_fore" \
-            "  FROM (SELECT a.pid as pid, a.date as date, a.eps_bold as eps_bold, a.eps_fore as eps_fore" \
-            "     , (CASE @vpid WHEN a.pid THEN @rownum:=@rownum+1 ELSE @rownum:=1 END) num, (@vpid:=a.pid) vpid" \
-            "          FROM stock_earnings a, (SELECT @vpid:='', @rownum:=0 FROM DUAL) b" \
-            "         ORDER BY a.pid, a.date DESC) c, stock_master d" \
-            " WHERE num = 1 AND c.pid = d.pid"
+    sql_1 = " WITH tmp AS (SELECT c.pid AS pid, c.date AS date, c.eps_bold AS eps_bold, c.eps_fore AS eps_fore, c.p_date AS p_date" \
+            "                   , c.chg_eps_bold AS chg_eps_bold, c.chg_eps_fore AS chg_eps_fore, c.num AS num" \
+            "                FROM (SELECT a.pid AS pid, a.date AS date, a.eps_bold AS eps_bold, a.eps_fore AS eps_fore" \
+            "                           , (CASE @p_pid WHEN a.pid THEN @rownum:=@rownum+1 ELSE @rownum:=1 END) num" \
+            "                           , (CASE @p_pid WHEN a.pid THEN @p_date ELSE @p_date:='' END) p_date" \
+            "                           , (CASE @p_pid WHEN a.pid THEN round(a.eps_bold/@p_eps_bold-1, 4) ELSE 0 END) chg_eps_bold" \
+            "                           , (CASE @p_pid WHEN a.pid THEN round(a.eps_fore/@p_eps_fore-1, 4) ELSE 0 END) chg_eps_fore" \
+            "                           , (@p_pid:=a.pid), (@p_date:=a.date), (@p_eps_bold:= a.eps_bold), (@p_eps_fore:= a.eps_fore)" \
+            "                        FROM stock_earnings a, (SELECT @p_pid:='', @p_date:='', @p_eps_bold:=0, @p_eps_fore:=0, @rownum:=0 FROM DUAL) b" \
+            "                       ORDER BY a.pid, a.date) c, stock_master d" \
+            "               WHERE c.pid = d.pid)" \
+            "SELECT a.* FROM tmp a, (SELECT pid AS pid, max(num) AS max_num FROM tmp GROUP BY pid) b" \
+            " WHERE a.pid = b.pid AND a.num = b.max_num"
     result = db.select_query(query=sql_1)
     print(result)
 
@@ -304,7 +311,7 @@ if __name__ == '__main__':
     db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", password="ryumaria")
 
     options = [['KR', 'KOSPI 200'], ['KR', 'KOSDAQ 150'], ['US', 'S&P 500'], ['US', 'Nasdaq 100'], ]
-    CrawlingData(options, do_profile=False, do_financial=False, do_earnings=False, do_dividends=False, do_price_list=[True, False, False], loop_sleep_term=1)
+    #CrawlingData(options, do_profile=False, do_financial=False, do_earnings=False, do_dividends=False, do_price_list=[True, False, False], loop_sleep_term=1)
     GenerateAdditionalData()
 
     db.disconnect()
