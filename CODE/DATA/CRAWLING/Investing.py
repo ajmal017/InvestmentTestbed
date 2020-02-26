@@ -202,7 +202,7 @@ class InvestingStockInfo():
         # 그룹내 기들의 기본 데이터를 출력
         df = pd.DataFrame(columns=columns)
 
-        self.SelectGroup()
+        self.SelectGroup(t_gap)
 
         html = self.wd.page_source
         bs = BeautifulSoup(html, 'html.parser')
@@ -251,7 +251,7 @@ class InvestingStockInfo():
 
         return df
 
-    def GetFinancialData(self, url, annual=True, quaterly=True, t_gap=0.5):
+    def GetFinancialData(self, url, annual=True, quaterly=True, t_gap=2.0):
 
         annual_result = None
         quaterly_result = None
@@ -370,7 +370,7 @@ class InvestingStockInfo():
 
         return {'annual': pd.DataFrame(annual_result), 'quaterly': pd.DataFrame(quaterly_result)}
 
-    def GetEarningsData(self, url, loop_num=0, t_gap=0.5):
+    def GetEarningsData(self, url, loop_num=0, t_gap=2.0):
         self.wd.get('%s' % (url))
         time.sleep(t_gap)
 
@@ -389,7 +389,7 @@ class InvestingStockInfo():
                 # self.wd.execute_script(script)  # js 실행
                 result = self.wd.find_element_by_xpath('// *[ @ id = "showMoreEarningsHistory"] / a')
                 result.click()
-                time.sleep(t_gap)
+                time.sleep(t_gap/4)
             except:
                 # print('error: %s' % str(page))
 
@@ -414,7 +414,7 @@ class InvestingStockInfo():
 
                 return pd.DataFrame(results)
 
-    def GetDividendsData(self, url, loop_num=0, t_gap=0.5):
+    def GetDividendsData(self, url, loop_num=0, t_gap=2.0):
         self.wd.get('%s' % (url))
         time.sleep(t_gap)
 
@@ -433,7 +433,7 @@ class InvestingStockInfo():
                 # self.wd.execute_script(script)  # js 실행
                 result = self.wd.find_element_by_xpath('// *[ @ id = "showMoreDividendsHistory"] / text()')
                 result.click()
-                time.sleep(t_gap)
+                time.sleep(t_gap/4)
             except:
                 # print('error: %s' % str(page))
 
@@ -501,7 +501,7 @@ class InvestingStockInfo():
 
         return pd.DataFrame(results)
 
-    def SelectGroup(self, t_gap=0.5):
+    def SelectGroup(self, t_gap=1.5):
 
         if self.country == 'KR':
             if self.group == 'KOSPI 200':

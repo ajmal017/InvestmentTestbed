@@ -27,6 +27,8 @@ def CrawlingData(options, do_profile, do_financial, do_earnings, do_dividends, d
     # 주식의 기본 정보 크롤링
     if do_profile == True:
 
+        start_time = time.time()
+
         stocks_list = []
         for idx, option in enumerate(options):
             country = option[0]
@@ -37,13 +39,13 @@ def CrawlingData(options, do_profile, do_financial, do_earnings, do_dividends, d
 
             # 대표지수에 포함되어 있는 종목 리스트 및 필요 정보 크롤링
             columns = ['pid', 'country', 'nm', 'industry', 'sector', 'url', 'profile_url', 'financial_url', 'earnings_url', 'dividends_url', 'price_url']
-            comp_info_list = obj.GetCompsInfo(columns, idx)
+            comp_info_list = obj.GetCompsInfo(columns, idx, t_gap=1.5)
 
             for idx_comp, comp_info in comp_info_list.iterrows():
                 '''
                 # 요청이 너무 많은 경우 원격 호스트에 의해 강제로 끊는담.
                 # 처리된 종목까지는 패스
-                if option[1] == 'KOSPI 200' and idx_comp < 199:
+                if group == 'KOSPI 200' and idx_comp < 100:
                     continue
                 '''
                 # 동일 종목이 기존에 처리된 지수에 중복 편입되어 있는 경우 패스
@@ -80,6 +82,11 @@ def CrawlingData(options, do_profile, do_financial, do_earnings, do_dividends, d
                 '''
                 time.sleep(loop_sleep_term)
 
+                end_time = time.time()
+                if idx_comp % 30 == 0:
+                    print('크롤링 프로파일: ' + str(round(end_time - start_time)) + 'secs' + '(' + str(idx+1) + '/' + str(len(options)) + ', ' + str(idx_comp+1) + '/' + str(len(comp_info_list)) + ')')
+
+
     # 사전에 크롤링된 종목 정보를 DB에서 가져옴
     else:
         sql = "SELECT pid, country, nm, industry, sector, url, profile_url, financial_url, earnings_url, dividends_url, price_url" \
@@ -89,13 +96,16 @@ def CrawlingData(options, do_profile, do_financial, do_earnings, do_dividends, d
 
         # financial 정보 크롤링(anuual: 4년, qualterly: 4분기)
         if do_financial == True:
+
+            start_time = time.time()
+
             for idx_comp, comp_info in comp_info_list.iterrows():
                 '''
                 # 정상 처리된 종목까지는 패스
-                if idx_comp < 807:
+                if idx_comp < 165:
                     continue
                 '''
-                financials = obj.GetFinancialData(comp_info['financial_url'], t_gap=1.5)
+                financials = obj.GetFinancialData(comp_info['financial_url'], t_gap=2.0)
                 #print(financials)
 
                 component_list = ['Period Ending:', 'Period Length:', 'Total Revenue', 'Gross Profit', 'Operating Income', 'Net Income', 'Total Assets', 'Total Liabilities', 'Total Equity', 'Cash From Operating Activities','Cash From Investing Activities', 'Cash From Financing Activities', 'Net Change in Cash']
@@ -140,15 +150,22 @@ def CrawlingData(options, do_profile, do_financial, do_earnings, do_dividends, d
 
                 time.sleep(loop_sleep_term)
 
+                end_time = time.time()
+                if idx_comp % 30 == 0:
+                    print('크롤링 재무데이터: ' + str(round(end_time - start_time)) + 'secs' + '(' + str(idx_comp + 1) + '/' + str(len(comp_info_list)) + ')')
+
         # 실적(어닝) 정보 크롤링
         if do_earnings == True:
+
+            start_time = time.time()
+
             for idx_comp, comp_info in comp_info_list.iterrows():
                 '''
                 # 정상 처리된 종목까지는 패스
                 if idx_comp < 157:
                     continue
                 '''
-                earnings_list = obj.GetEarningsData(comp_info['earnings_url'], loop_num=2, t_gap=1.5)
+                earnings_list = obj.GetEarningsData(comp_info['earnings_url'], loop_num=2, t_gap=2.0)
                 #print(earnings_list)
 
                 idx_earnings = 0
@@ -176,8 +193,15 @@ def CrawlingData(options, do_profile, do_financial, do_earnings, do_dividends, d
 
                 time.sleep(loop_sleep_term)
 
+                end_time = time.time()
+                if idx_comp % 30 == 0:
+                    print('크롤링 실적데이터: ' + str(round(end_time - start_time)) + 'secs' + '(' + str(idx_comp + 1) + '/' + str(len(comp_info_list))  + ')')
+
         # 배당 지급 정보 크롤링
         if do_dividends == True:
+
+            start_time = time.time()
+
             for idx_comp, comp_info in comp_info_list.iterrows():
                 '''
                 # 정상 처리된 종목까지는 패스
@@ -208,9 +232,14 @@ def CrawlingData(options, do_profile, do_financial, do_earnings, do_dividends, d
 
                 time.sleep(loop_sleep_term)
 
+                end_time = time.time()
+                if idx_comp % 30 == 0:
+                    print('크롤링 배당데이터: ' + str(round(end_time - start_time)) + 'secs' + '(' + str(idx_comp + 1) + '/' + str(len(comp_info_list)) + ')')
+
         # 주가 데이 API
         if do_price_list[0] == True:
 
+            start_time = time.time()
             #obj.Finish()
 
             start_date = '1/1/2000'
@@ -287,6 +316,10 @@ def CrawlingData(options, do_profile, do_financial, do_earnings, do_dividends, d
 
                 time.sleep(loop_sleep_term)
 
+                end_time = time.time()
+                if idx_comp % 30 == 0:
+                    print('크롤링 가격데이터: ' + str(round(end_time - start_time)) + 'secs' + '(' + str(idx_comp + 1) + '/' + str(len(comp_info_list)) + ')')
+
 def GenerateAdditionalData():
     # 종목별 마지막 eps 데이터 조회
     sql_1 = " WITH tmp AS (SELECT c.pid AS pid, c.date AS date, c.eps_bold AS eps_bold, c.eps_fore AS eps_fore, c.p_date AS p_date" \
@@ -300,8 +333,10 @@ def GenerateAdditionalData():
             "                        FROM stock_earnings a, (SELECT @p_pid:='', @p_date:='', @p_eps_bold:=0, @p_eps_fore:=0, @rownum:=0 FROM DUAL) b" \
             "                       ORDER BY a.pid, a.date) c, stock_master d" \
             "               WHERE c.pid = d.pid)" \
-            "SELECT a.* FROM tmp a, (SELECT pid AS pid, max(num) AS max_num FROM tmp GROUP BY pid) b" \
-            " WHERE a.pid = b.pid AND a.num = b.max_num"
+            "SELECT a.*, c.date AS day, c.close AS close, c.close/a.eps_bold AS per_bold, round(c.close/a.eps_fore, 4) AS per_fore" \
+            "  FROM tmp a, (SELECT pid AS pid, max(num) AS max_num FROM tmp GROUP BY pid) b, stock_price c" \
+            " WHERE a.pid = b.pid AND a.num = b.max_num" \
+            "   AND a.pid = c.pid AND c.date >= a.p_date AND c.date < a.date"
     result = db.select_query(query=sql_1)
     print(result)
 
@@ -311,7 +346,7 @@ if __name__ == '__main__':
     db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", password="ryumaria")
 
     options = [['KR', 'KOSPI 200'], ['KR', 'KOSDAQ 150'], ['US', 'S&P 500'], ['US', 'Nasdaq 100'], ]
-    CrawlingData(options, do_profile=False, do_financial=False, do_earnings=True, do_dividends=False, do_price_list=[False, False, False], loop_sleep_term=0)
+    CrawlingData(options, do_profile=False, do_financial=True, do_earnings=False, do_dividends=False, do_price_list=[False, False, False], loop_sleep_term=0)
     #CrawlingData(options, do_profile=False, do_financial=False, do_earnings=False, do_dividends=True, do_price_list=[False, False, False], loop_sleep_term=0)
     GenerateAdditionalData()
 
