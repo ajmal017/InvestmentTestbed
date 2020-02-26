@@ -195,9 +195,9 @@ class InvestingStockInfo():
         # 크롬 웹드라이버 실행
         self.wd = self.GetWebDriver()
 
-    def GetCompsInfo(self, columns, cnt=0):
-
+    def GetCompsInfo(self, columns, cnt=0, t_gap=1.5):
         self.wd.get(self.country_equity_dir[self.country])
+        time.sleep(t_gap)
 
         # 그룹내 기들의 기본 데이터를 출력
         df = pd.DataFrame(columns=columns)
@@ -232,8 +232,9 @@ class InvestingStockInfo():
 
         return df
 
-    def GetProfileData(self, url, df):
+    def GetProfileData(self, url, df, t_gap=0.5):
         self.wd.get('%s' % (url))
+        time.sleep(t_gap)
 
         html = self.wd.page_source
         bs = BeautifulSoup(html, 'html.parser')
@@ -258,8 +259,7 @@ class InvestingStockInfo():
         # Annual 데이터
         if annual == True:
             self.wd.get('%s' % (url))
-
-            annual_result = {}
+            time.sleep(t_gap/2)
 
             try:
                 result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[1]')
@@ -268,12 +268,13 @@ class InvestingStockInfo():
             result.click()
             time.sleep(t_gap)
 
+            annual_result = {}
+
             html = self.wd.page_source
             bs = BeautifulSoup(html, 'html.parser')
             tables = bs.findAll('table', {'class': 'genTbl openTbl companyFinancialSummaryTbl'})
             for table in tables:
                 header = table.find('thead').findAll('tr')
-
                 dates = header[0].findAll('th')
                 key = None
                 for idx_col, column in enumerate(dates):
@@ -314,8 +315,7 @@ class InvestingStockInfo():
         # Quarterly 데이터
         if quaterly == True:
             self.wd.get('%s' % (url))
-
-            quaterly_result = {}
+            time.sleep(t_gap/2)
 
             try:
                 result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[2]')
@@ -324,12 +324,13 @@ class InvestingStockInfo():
             result.click()
             time.sleep(t_gap)
 
+            quaterly_result = {}
+
             html = self.wd.page_source
             bs = BeautifulSoup(html, 'html.parser')
             tables = bs.findAll('table', {'class': 'genTbl openTbl companyFinancialSummaryTbl'})
             for table in tables:
                 header = table.find('thead').findAll('tr')
-
                 dates = header[0].findAll('th')
                 key = None
                 for idx_col, column in enumerate(dates):
@@ -371,8 +372,10 @@ class InvestingStockInfo():
 
     def GetEarningsData(self, url, loop_num=0, t_gap=0.5):
         self.wd.get('%s' % (url))
+        time.sleep(t_gap)
 
         results = []
+
         loop_cnt = 0
         for page in count(1):
             try:
@@ -386,8 +389,7 @@ class InvestingStockInfo():
                 # self.wd.execute_script(script)  # js 실행
                 result = self.wd.find_element_by_xpath('// *[ @ id = "showMoreEarningsHistory"] / a')
                 result.click()
-
-                time.sleep(t_gap)  # 크롤링 로직을 수행하기 위해 5초정도 쉬어준다.
+                time.sleep(t_gap)
             except:
                 # print('error: %s' % str(page))
 
@@ -414,8 +416,10 @@ class InvestingStockInfo():
 
     def GetDividendsData(self, url, loop_num=0, t_gap=0.5):
         self.wd.get('%s' % (url))
+        time.sleep(t_gap)
 
         results = []
+
         loop_cnt = 0
         for page in count(1):
             try:
@@ -429,8 +433,7 @@ class InvestingStockInfo():
                 # self.wd.execute_script(script)  # js 실행
                 result = self.wd.find_element_by_xpath('// *[ @ id = "showMoreDividendsHistory"] / text()')
                 result.click()
-
-                time.sleep(t_gap)  # 크롤링 로직을 수행하기 위해 5초정도 쉬어준다.
+                time.sleep(t_gap)
             except:
                 # print('error: %s' % str(page))
 
@@ -458,8 +461,9 @@ class InvestingStockInfo():
 
                 return pd.DataFrame(results)
 
-    def GetPriceData(self, url, set_calendar=False, start_date='1/1/2000', end_date='12/31/9999', t_gap=0.5):
+    def GetPriceData(self, url, set_calendar=False, start_date='1/1/2000', end_date='12/31/9999', t_gap=1.5):
         self.wd.get('%s' % (url))
+        time.sleep(t_gap/2)
 
         if set_calendar == True:
             calendar = self.wd.find_element_by_xpath('//*[@id="picker"]')
@@ -472,12 +476,13 @@ class InvestingStockInfo():
             self.wd.execute_script("arguments[0].click();", button)
             time.sleep(t_gap)  # 크롤링 로직을 수행하기 위해 5초정도 쉬어준다.
 
+        results = []
+
         html = self.wd.page_source
         bs = BeautifulSoup(html, 'html.parser')
         tbody = bs.find('table', {'class': 'genTbl closedTbl historicalTbl'}).find('tbody')
         rows = tbody.findAll('tr')
 
-        results = []
         try:
             for row in rows:
                 tmp_tbl = row.findAll('td')
@@ -496,7 +501,7 @@ class InvestingStockInfo():
 
         return pd.DataFrame(results)
 
-    def SelectGroup(self):
+    def SelectGroup(self, t_gap=0.5):
 
         if self.country == 'KR':
             if self.group == 'KOSPI 200':
@@ -510,9 +515,8 @@ class InvestingStockInfo():
                 group_type = self.wd.find_element_by_xpath('//*[@id="20"]')
         else:
             group_type = self.wd.find_element_by_xpath('//*[@id="all"]')
-
         group_type.click()
-        time.sleep(1)
+        time.sleep(t_gap)
 
     def GetWebDriver(self):
 
@@ -535,7 +539,6 @@ class InvestingStockInfo():
 
     def Finish(self):
         self.wd.quit()
-
 
 
 class InvestingEconomicEventCalendar():
