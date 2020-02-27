@@ -7,6 +7,7 @@ from urllib.error import HTTPError
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
+from selenium import common
 import datetime
 import time
 import sys
@@ -195,14 +196,14 @@ class InvestingStockInfo():
         # 크롬 웹드라이버 실행
         self.wd = self.GetWebDriver()
 
-    def GetCompsInfo(self, columns, cnt=0, t_gap=1.5):
+    def GetCompsInfo(self, columns, cnt=0):
         self.wd.get(self.country_equity_dir[self.country])
-        time.sleep(t_gap)
+        time.sleep(0.5)
 
         # 그룹내 기들의 기본 데이터를 출력
         df = pd.DataFrame(columns=columns)
 
-        self.SelectGroup(t_gap)
+        self.SelectGroup()
 
         html = self.wd.page_source
         bs = BeautifulSoup(html, 'html.parser')
@@ -232,13 +233,16 @@ class InvestingStockInfo():
 
         return df
 
-    def GetProfileData(self, url, df, t_gap=0.5):
+    def GetProfileData(self, url, df):
         self.wd.get('%s' % (url))
-        time.sleep(t_gap)
+        time.sleep(0.5)
 
         html = self.wd.page_source
         bs = BeautifulSoup(html, 'html.parser')
         tbody = bs.find('div', {'class': 'companyProfileHeader'})
+        # 시가총액이 작은 기없의 경우 데이터가 없는 경우 있음
+        if tbody == None:
+            return df
         rows = tbody.findAll('div')
 
         for idx, row in enumerate(rows):
@@ -251,128 +255,101 @@ class InvestingStockInfo():
 
         return df
 
-    def GetFinancialData(self, url, annual=True, quaterly=True, t_gap=2.0):
+    def doFinancialData(self, url, type_p, ret_result):
+        self.wd.get('%s' % (url))
+        time.sleep(0.1)
 
-        annual_result = None
-        quaterly_result = None
+        page_done = False
+        while page_done == False:
+            #print(type_p + ' page_done ' + str(page_done))
+            page_done = True
+            try:
+                if type_p == 'a':
+                    result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[1]')
+                elif type_p == 'q':
+                    result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[2]')
+                result.click()
+            except (common.exceptions.ElementClickInterceptedException):
+                page_done = False
+            except:
+                if type_p == 'a':
+                    result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[10] / a[1]')
+                elif type_p == 'q':
+                    result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[10] / a[2]')
+                result.click()
+                # self.wd.execute_script("arguments[0].click();", result)
+
+            time.sleep(0.1)
+
+        table_done = False
+        while table_done == False:
+            #print(type_p + ' table_done ' + str(table_done))
+            time.sleep(0.1)
+
+            html = self.wd.page_source
+            bs = BeautifulSoup(html, 'html.parser')
+            tables = bs.findAll('table', {'class': 'genTbl openTbl companyFinancialSummaryTbl'})
+            table_done = True if len(tables) > 0 else False
+
+        for table in tables:
+            header = table.find('thead').findAll('tr')
+            dates = header[0].findAll('th')
+            key = None
+            for idx_col, column in enumerate(dates):
+                if idx_col == 0:
+                    key = column.text
+                    ret_result[key] = []
+                else:
+                    ret_result[key].append(column.text)
+
+            if len(header) > 1:
+                terms = header[1].findAll('td')
+                key = None
+                for idx_col, column in enumerate(terms):
+                    if idx_col == 0:
+                        key = column.text
+                        ret_result[key] = []
+                    else:
+                        ret_result[key].append(column.text)
+
+            tbodys = table.find('tbody').findAll('tr')
+            for tbody in tbodys:
+                value = tbody.findAll('td')
+                key = None
+                for idx_col, column in enumerate(value):
+                    if idx_col == 0:
+                        key = column.text
+                        ret_result[key] = []
+                    else:
+                        ret_result[key].append(column.text)
+
+        for idx_cal, cal in enumerate(ret_result['Period Ending:']):
+            cal = cal.replace(',', '').split()
+            ret_result['Period Ending:'][idx_cal] = str(date(int(cal[2]), calendar_map[cal[0]], int(cal[1])))
+
+        for idx_cal, cal in enumerate(ret_result['Period Length:']):
+            ret_result['Period Length:'][idx_cal] = int(cal.replace(' Months', ''))
+
+        return ret_result
+
+    def GetFinancialData(self, url, annual=True, quaterly=True):
+
+        annual_result = {}
+        quaterly_result = {}
 
         # Annual 데이터
         if annual == True:
-            self.wd.get('%s' % (url))
-            time.sleep(t_gap)
-
-            try:
-                result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[1]')
-            except:
-                result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[10] / a[1]')
-            result.click()
-            time.sleep(t_gap)
-
-            annual_result = {}
-
-            html = self.wd.page_source
-            bs = BeautifulSoup(html, 'html.parser')
-            tables = bs.findAll('table', {'class': 'genTbl openTbl companyFinancialSummaryTbl'})
-            for table in tables:
-                header = table.find('thead').findAll('tr')
-                dates = header[0].findAll('th')
-                key = None
-                for idx_col, column in enumerate(dates):
-                    if idx_col == 0:
-                        key = column.text
-                        annual_result[key] = []
-                    else:
-                        annual_result[key].append(column.text)
-
-                if len(header) > 1:
-                    terms = header[1].findAll('td')
-                    key = None
-                    for idx_col, column in enumerate(terms):
-                        if idx_col == 0:
-                            key = column.text
-                            annual_result[key] = []
-                        else:
-                            annual_result[key].append(column.text)
-
-                tbodys = table.find('tbody').findAll('tr')
-                for tbody in tbodys:
-                    value = tbody.findAll('td')
-                    key = None
-                    for idx_col, column in enumerate(value):
-                        if idx_col == 0:
-                            key = column.text
-                            annual_result[key] = []
-                        else:
-                            annual_result[key].append(column.text)
-
-            for idx_cal, cal in enumerate(annual_result['Period Ending:']):
-                cal = cal.replace(',', '').split()
-                annual_result['Period Ending:'][idx_cal] = str(date(int(cal[2]), calendar_map[cal[0]], int(cal[1])))
-
-            for idx_cal, cal in enumerate(annual_result['Period Length:']):
-                annual_result['Period Length:'][idx_cal] = int(cal.replace(' Months', ''))
+            annual_result = self.doFinancialData(url, type_p='a', ret_result=annual_result)
 
         # Quarterly 데이터
         if quaterly == True:
-            self.wd.get('%s' % (url))
-            time.sleep(t_gap)
-
-            try:
-                result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[2]')
-            except:
-                result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[10] / a[2]')
-            result.click()
-            time.sleep(t_gap)
-
-            quaterly_result = {}
-
-            html = self.wd.page_source
-            bs = BeautifulSoup(html, 'html.parser')
-            tables = bs.findAll('table', {'class': 'genTbl openTbl companyFinancialSummaryTbl'})
-            for table in tables:
-                header = table.find('thead').findAll('tr')
-                dates = header[0].findAll('th')
-                key = None
-                for idx_col, column in enumerate(dates):
-                    if idx_col == 0:
-                        key = column.text
-                        quaterly_result[key] = []
-                    else:
-                        quaterly_result[key].append(column.text)
-
-                if len(header) > 1:
-                    term = header[1].findAll('td')
-                    key = None
-                    for idx_col, column in enumerate(term):
-                        if idx_col == 0:
-                            key = column.text
-                            quaterly_result[key] = []
-                        else:
-                            quaterly_result[key].append(column.text)
-
-                tbodys = table.find('tbody').findAll('tr')
-                for tbody in tbodys:
-                    value = tbody.findAll('td')
-                    key = None
-                    for idx_col, column in enumerate(value):
-                        if idx_col == 0:
-                            key = column.text
-                            quaterly_result[key] = []
-                        else:
-                            quaterly_result[key].append(column.text)
-
-            for idx_cal, cal in enumerate(quaterly_result['Period Ending:']):
-                cal = cal.replace(',', '').split()
-                quaterly_result['Period Ending:'][idx_cal] = str(date(int(cal[2]), calendar_map[cal[0]], int(cal[1])))
-
-            for idx_cal, cal in enumerate(quaterly_result['Period Length:']):
-                quaterly_result['Period Length:'][idx_cal] = int(cal.replace(' Months', ''))
+            quaterly_result = self.doFinancialData(url, type_p='q', ret_result=quaterly_result)
 
         return {'annual': pd.DataFrame(annual_result), 'quaterly': pd.DataFrame(quaterly_result)}
 
-    def GetEarningsData(self, url, loop_num=0, t_gap=2.0):
+    def GetEarningsData(self, url, loop_num=0):
         self.wd.get('%s' % (url))
-        time.sleep(t_gap)
+        time.sleep(0.5)
 
         results = []
 
@@ -385,11 +362,10 @@ class InvestingStockInfo():
                 else:
                     loop_cnt += 1
 
-                script = 'void(0)'  # 사용하는 페이지를 이동시키는 js 코드
-                # self.wd.execute_script(script)  # js 실행
-                result = self.wd.find_element_by_xpath('// *[ @ id = "showMoreEarningsHistory"] / a')
+                result = self.wd.find_element_by_xpath('//*[@id="showMoreEarningsHistory"]')
                 result.click()
-                time.sleep(t_gap/4)
+                #self.wd.execute_script("arguments[0].click();", result)
+                time.sleep(0.1)
             except:
                 # print('error: %s' % str(page))
 
@@ -414,9 +390,9 @@ class InvestingStockInfo():
 
                 return pd.DataFrame(results)
 
-    def GetDividendsData(self, url, loop_num=0, t_gap=2.0):
+    def GetDividendsData(self, url, loop_num=0):
         self.wd.get('%s' % (url))
-        time.sleep(t_gap)
+        time.sleep(0.5)
 
         results = []
 
@@ -429,11 +405,10 @@ class InvestingStockInfo():
                 else:
                     loop_cnt += 1
 
-                script = 'void(0)'  # 사용하는 페이지를 이동시키는 js 코드
-                # self.wd.execute_script(script)  # js 실행
-                result = self.wd.find_element_by_xpath('// *[ @ id = "showMoreDividendsHistory"] / text()')
+                result = self.wd.find_element_by_xpath('//*[@id="showMoreDividendsHistory"]')
                 result.click()
-                time.sleep(t_gap/4)
+                #self.wd.execute_script("arguments[0].click();", result)
+                time.sleep(0.1)
             except:
                 # print('error: %s' % str(page))
 
@@ -461,20 +436,23 @@ class InvestingStockInfo():
 
                 return pd.DataFrame(results)
 
-    def GetPriceData(self, url, set_calendar=False, start_date='1/1/2000', end_date='12/31/9999', t_gap=1.5):
+    def GetPriceData(self, url, set_calendar=False, start_date='1/1/2000', end_date='12/31/9999'):
         self.wd.get('%s' % (url))
-        time.sleep(t_gap)
+        time.sleep(0.5)
 
         if set_calendar == True:
             calendar = self.wd.find_element_by_xpath('//*[@id="picker"]')
             self.wd.execute_script("arguments[0].value = '%s - %s';" % (start_date, end_date), calendar)
-            time.sleep(t_gap)  # 크롤링 로직을 수행하기 위해 5초정도 쉬어준다.
+            time.sleep(0.1)
             self.wd.find_element_by_xpath('//*[@id="widget"]').click()
-            time.sleep(t_gap)  # 크롤링 로직을 수행하기 위해 5초정도 쉬어준다.
+            #self.wd.execute_script("arguments[0].click();", self.wd.find_element_by_xpath('//*[@id="widget"]'))
+            time.sleep(0.2)
             button = self.wd.find_element_by_xpath('//*[@id="applyBtn"]')
-            time.sleep(t_gap)  # 크롤링 로직을 수행하기 위해 5초정도 쉬어준다.
+            time.sleep(0.2)
             self.wd.execute_script("arguments[0].click();", button)
-            time.sleep(t_gap)  # 크롤링 로직을 수행하기 위해 5초정도 쉬어준다.
+            #self.wd.execute_script("arguments[0].click();", button)
+            time.sleep(0.5)
+
 
         results = []
 
@@ -501,7 +479,7 @@ class InvestingStockInfo():
 
         return pd.DataFrame(results)
 
-    def SelectGroup(self, t_gap=1.5):
+    def SelectGroup(self):
 
         if self.country == 'KR':
             if self.group == 'KOSPI 200':
@@ -516,7 +494,9 @@ class InvestingStockInfo():
         else:
             group_type = self.wd.find_element_by_xpath('//*[@id="all"]')
         group_type.click()
-        time.sleep(t_gap)
+        #self.wd.execute_script("arguments[0].click();", group_type) # 해당 컴포넌트에서는 스크립트가 작동하지 않음
+
+        time.sleep(3.0)
 
     def GetWebDriver(self):
 
@@ -678,8 +658,8 @@ class InvestingEconomicEventCalendar():
                 script = 'void(0)'  # 사용하는 페이지를 이동시키는 js 코드
                 # self.wd.execute_script(script)  # js 실행
                 result = self.wd.find_element_by_xpath('//*[@id="showMoreHistory%s"]/a' % cd)
-                result.click()
-
+                #result.click()
+                self.wd.execute_script("arguments[0].click();", result)
                 time.sleep(t_gap)  # 크롤링 로직을 수행하기 위해 5초정도 쉬어준다.
             except:
                 # print('error: %s' % str(page))
