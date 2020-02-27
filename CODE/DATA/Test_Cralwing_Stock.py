@@ -106,7 +106,7 @@ def CrawlingData(options, do_profile, do_financial, do_earnings, do_dividends, d
             for idx_comp, comp_info in comp_info_list.iterrows():
                 '''
                 # 정상 처리된 종목까지는 패스
-                if idx_comp < 322:
+                if idx_comp < 391:
                     continue
                 '''
                 financials = obj.GetFinancialData(comp_info['financial_url'])

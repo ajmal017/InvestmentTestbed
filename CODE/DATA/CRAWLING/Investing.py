@@ -255,41 +255,55 @@ class InvestingStockInfo():
 
         return df
 
-    def doFinancialData(self, url, type_p, ret_result):
-        self.wd.get('%s' % (url))
-        time.sleep(0.1)
+    def clickPeriodTypeInFinancialSummary(self, type):
 
         page_done = False
         while page_done == False:
-            #print(type_p + ' page_done ' + str(page_done))
+            # print(type_p + ' page_done ' + str(page_done))
             page_done = True
             try:
-                if type_p == 'a':
+                if type == 'a':
                     result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[1]')
-                elif type_p == 'q':
+                elif type == 'q':
                     result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[2]')
                 result.click()
             except (common.exceptions.ElementClickInterceptedException):
                 page_done = False
             except:
-                if type_p == 'a':
+                if type == 'a':
                     result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[10] / a[1]')
-                elif type_p == 'q':
+                elif type == 'q':
                     result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[10] / a[2]')
                 result.click()
                 # self.wd.execute_script("arguments[0].click();", result)
 
             time.sleep(0.1)
 
+    def readFinancialSummaryTables(self, type):
+
+        cnt = 0
+
         table_done = False
         while table_done == False:
-            #print(type_p + ' table_done ' + str(table_done))
-            time.sleep(0.1)
+            cnt += 1
 
             html = self.wd.page_source
             bs = BeautifulSoup(html, 'html.parser')
             tables = bs.findAll('table', {'class': 'genTbl openTbl companyFinancialSummaryTbl'})
             table_done = True if len(tables) > 0 else False
+
+            if cnt % 10 == 0:
+                self.clickPeriodTypeInFinancialSummary(type)
+
+        return tables
+
+    def readFinancialData(self, url, type, ret_result):
+        self.wd.get('%s' % (url))
+        time.sleep(0.1)
+
+        self.clickPeriodTypeInFinancialSummary(type)
+
+        tables = self.readFinancialSummaryTables(type)
 
         for table in tables:
             header = table.find('thead').findAll('tr')
@@ -339,11 +353,11 @@ class InvestingStockInfo():
 
         # Annual 데이터
         if annual == True:
-            annual_result = self.doFinancialData(url, type_p='a', ret_result=annual_result)
+            annual_result = self.readFinancialData(url, type='a', ret_result=annual_result)
 
         # Quarterly 데이터
         if quaterly == True:
-            quaterly_result = self.doFinancialData(url, type_p='q', ret_result=quaterly_result)
+            quaterly_result = self.readFinancialData(url, type='q', ret_result=quaterly_result)
 
         return {'annual': pd.DataFrame(annual_result), 'quaterly': pd.DataFrame(quaterly_result)}
 
