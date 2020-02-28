@@ -159,7 +159,7 @@ def CrawlingData(options, do_profile, do_financial, do_earnings, do_dividends, d
                     print('크롤링 재무데이터: ' + str(round(end_time - start_time)) + 'secs' + '(' + str(idx_comp + 1) + '/' + str(len(comp_info_list)) + ')')
 
         # 실적(어닝) 정보 크롤링
-        if do_earnings == True:
+        if do_earnings[0] == True:
 
             start_time = time.time()
 
@@ -169,7 +169,7 @@ def CrawlingData(options, do_profile, do_financial, do_earnings, do_dividends, d
                 if idx_comp < 157:
                     continue
                 '''
-                earnings_list = obj.GetEarningsData(comp_info['earnings_url'], loop_num=2)
+                earnings_list = obj.GetEarningsData(comp_info['earnings_url'], loop_num=do_earnings[1])
                 #print(earnings_list)
 
                 idx_earnings = 0
@@ -202,7 +202,7 @@ def CrawlingData(options, do_profile, do_financial, do_earnings, do_dividends, d
                     print('크롤링 실적데이터: ' + str(round(end_time - start_time)) + 'secs' + '(' + str(idx_comp + 1) + '/' + str(len(comp_info_list))  + ')')
 
         # 배당 지급 정보 크롤링
-        if do_dividends == True:
+        if do_dividends[0] == True:
 
             start_time = time.time()
 
@@ -212,7 +212,7 @@ def CrawlingData(options, do_profile, do_financial, do_earnings, do_dividends, d
                 if idx_comp < 370:
                     continue
                 '''
-                dividends_list = obj.GetDividendsData(comp_info['dividends_url'], loop_num=1)
+                dividends_list = obj.GetDividendsData(comp_info['dividends_url'], loop_num=do_dividends[1])
                 #print(dividends_list)
 
                 idx_dividends = 0
@@ -257,9 +257,11 @@ def CrawlingData(options, do_profile, do_financial, do_earnings, do_dividends, d
                 check_sql = "SELECT MAX(date) as max_date FROM stock_price" \
                             " WHERE pid='%s'" % (comp_info['pid'])
                 last_date = db.select_query(query=check_sql)
+                # last_date[0][0]가 None인 경우는 해당 종목에 데이터가 하나도 없기 때문에 2000/1/1 이후 존제하는 모든 데이터를 수신  
                 if last_date[0][0] != None:
                     start_date = last_date[0][0].split('-')
                     start_date = str(int(start_date[1])) + '/' + str(int(start_date[2])) + '/' + str(int(start_date[0]))
+                # 금일까지 종가로 존제하는 모든 데이터를 수신
                 end_date = str(datetime.today().date()).split('-')
                 end_date = str(int(end_date[1])) + '/' + str(int(end_date[2])) + '/' + str(int(end_date[0]))
 
@@ -268,7 +270,7 @@ def CrawlingData(options, do_profile, do_financial, do_earnings, do_dividends, d
                     ihd = Investing.IndiceHistoricalData('https://www.investing.com/instruments/HistoricalDataAjax')
 
                     header = {'name': comp_info['nm'],
-                              'curr_id': comp_info['pid'],  # investing.com html에는 'key'로 조회
+                              'curr_id': comp_info['pid'],  # investing.com html에서 'key'로 사용
                               'sort_col': 'date',
                               'action': 'historical_data'}
                     ihd.setFormData(header)
@@ -280,6 +282,7 @@ def CrawlingData(options, do_profile, do_financial, do_earnings, do_dividends, d
                     ihd.downloadData()
                     #ihd.printData()
                     prices = ihd.observations
+                # 크롤링을 이용해서 데이터 수신.
                 else:
                     prices = obj.GetPriceData(comp_info['price_url'], set_calendar=do_price_list[2], start_date=start_date, end_date=end_date)
 
@@ -350,7 +353,7 @@ if __name__ == '__main__':
     db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", password="ryumaria")
 
     options = [['KR', 'KOSPI 200'], ['KR', 'KOSDAQ 150'], ['US', 'S&P 500'], ['US', 'Nasdaq 100'], ]
-    CrawlingData(options, do_profile=False, do_financial=True, do_earnings=True, do_dividends=True, do_price_list=[False, False, False], loop_sleep_term=2)
+    CrawlingData(options, do_profile=False, do_financial=False, do_earnings=[True,1], do_dividends=[True,2], do_price_list=[False, False, True], loop_sleep_term=2)
     #CrawlingData(options, do_profile=False, do_financial=False, do_earnings=False, do_dividends=True, do_price_list=[False, False, False], loop_sleep_term=0)
     GenerateAdditionalData()
 
