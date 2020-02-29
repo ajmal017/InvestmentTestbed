@@ -167,6 +167,7 @@ class InvestingEconomicCalendar():
 
 calendar_map = {'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6, 'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
               , 'Q1': 1, 'Q2': 2, 'Q3': 3, 'Q4': 4}
+group_country_dict = {'KOSPI 200': 'KR', 'KOSDAQ 150': 'KR', 'S&P 500': 'US', 'Nasdaq 100': 'US'}
 
 def CrawlingStart(obj):
     obj.Start()
@@ -187,27 +188,80 @@ class InvestingStockInfo():
         self.dividends_sub = '-dividends'
         self.price_sub = '-historical-data'
 
-    def SetCountryGroupInfo(self, country, group):
-        self.country = country
-        self.group = group
+    def GetWebDriver(self,do_background):
+        options = webdriver.ChromeOptions()
 
-    def Start(self):
+        # 크롬을 BackGround에서 실행할 경우
+        if do_background == True:
+            options.add_argument('headless')
+            options.add_argument('window-size=1920x1080')
+            options.add_argument("disable-gpu")
+            # 혹은 options.add_argument("--disable-gpu")
 
-        # 크롬 웹드라이버 실행
-        self.wd = self.GetWebDriver()
+        if platform.system() == 'Windows':
+            wd = webdriver.Chrome('chromedriver', chrome_options=options)
+        else:
+            wd = webdriver.Chrome('%s/chromedriver' % (os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))), chrome_options=options)
 
-    def GetCompsInfo(self, columns, cnt=0):
+        return wd
+
+    def Start(self, do_background=False):
+        self.wd = self.GetWebDriver(do_background)
+
+    def Finish(self):
+        self.wd.quit()
+
+    def setGroupSelectBox(self):
+        setting_done = False
+        while setting_done == False:
+            setting_done = True
+            try:
+                if self.country == 'KR':
+                    if self.group == 'KOSPI 200':
+                        group_type = self.wd.find_element_by_xpath('//*[@id="37427"]')
+                    elif self.group == 'KOSDAQ 150':
+                        group_type = self.wd.find_element_by_xpath('//*[@id="980241"]')
+                elif self.country == 'US':
+                    if self.group == 'S&P 500':
+                        group_type = self.wd.find_element_by_xpath('//*[@id="166"]')
+                    elif self.group == 'Nasdaq 100':
+                        group_type = self.wd.find_element_by_xpath('//*[@id="20"]')
+                else:
+                    group_type = self.wd.find_element_by_xpath('//*[@id="all"]')
+                group_type.click()
+            except (common.exceptions.ElementClickInterceptedException):
+                setting_done = False
+            except (common.exceptions.NoSuchElementException):
+                setting_done = False
+
+    def readCompsTable(self):
+        table_done = False
+        while table_done == False:
+            try:
+                html = self.wd.page_source
+                bs = BeautifulSoup(html, 'html.parser')
+                tables = bs.find('table', {'id': 'cross_rate_markets_stocks_1'}).find('tbody')
+                table_done = True if len(tables) > 0 else False
+            except (AttributeError):
+                table_done = False
+
+        return tables
+
+    def setGroupCountry(self, index_nm):
+        self.group = index_nm
+        self.country = group_country_dict[index_nm]
+
+    def GetCompListInIndex(self, index_nm, columns):
+        self.setGroupCountry(index_nm)
         self.wd.get(self.country_equity_dir[self.country])
-        time.sleep(0.5)
+        time.sleep(0.1)
 
         # 그룹내 기들의 기본 데이터를 출력
         df = pd.DataFrame(columns=columns)
 
-        self.SelectGroup()
+        self.setGroupSelectBox()
 
-        html = self.wd.page_source
-        bs = BeautifulSoup(html, 'html.parser')
-        data_list = bs.find('table', {'id': 'cross_rate_markets_stocks_1'}).find('tbody')
+        data_list = self.readCompsTable()
         for idx_data, data in enumerate(data_list):
 
             pid = data['id'].split('_')[1]
@@ -241,7 +295,6 @@ class InvestingStockInfo():
         page_done = False
         while page_done == False:
             cnt += 1
-
             html = self.wd.page_source
             bs = BeautifulSoup(html, 'html.parser')
             tbody = bs.find('div', {'class': 'companyProfileHeader'})
@@ -265,7 +318,6 @@ class InvestingStockInfo():
     def clickPeriodTypeInFinancialSummary(self, type):
         page_done = False
         while page_done == False:
-            # print(type_p + ' page_done ' + str(page_done))
             page_done = True
             try:
                 if type == 'a':
@@ -273,15 +325,17 @@ class InvestingStockInfo():
                 elif type == 'q':
                     result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[2]')
                 result.click()
+            except (common.exceptions.NoSuchElementException):
+                try:
+                    if type == 'a':
+                        result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[10] / a[1]')
+                    elif type == 'q':
+                        result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[10] / a[2]')
+                    result.click()
+                except (common.exceptions.ElementClickInterceptedException):
+                    page_done = False
             except (common.exceptions.ElementClickInterceptedException):
                 page_done = False
-            except:
-                if type == 'a':
-                    result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[10] / a[1]')
-                elif type == 'q':
-                    result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[10] / a[2]')
-                result.click()
-                # self.wd.execute_script("arguments[0].click();", result)
 
             #time.sleep(0.1)
 
@@ -290,7 +344,6 @@ class InvestingStockInfo():
         table_done = False
         while table_done == False:
             cnt += 1
-
             try:
                 html = self.wd.page_source
                 bs = BeautifulSoup(html, 'html.parser')
@@ -300,8 +353,9 @@ class InvestingStockInfo():
                 table_done = False
 
             if cnt % 10 == 0:
+                print('##### clickPeriodTypeInFinancialSummary again #####')
                 self.clickPeriodTypeInFinancialSummary(type)
-                table_done = True
+                #table_done = True
 
         return tables
 
@@ -366,6 +420,25 @@ class InvestingStockInfo():
 
         return {'annual': pd.DataFrame(annual_result), 'quaterly': pd.DataFrame(quaterly_result)}
 
+    def readEarningTable(self):
+        cnt = 0
+        table_done = False
+        while table_done == False:
+            cnt += 1
+            try:
+                html = self.wd.page_source
+                bs = BeautifulSoup(html, 'html.parser')
+                tbody = bs.find('table', {'class': 'genTbl openTbl ecoCalTbl earnings earningsPageTbl'}).find('tbody')
+                rows = tbody.findAll('tr')
+                table_done = True if len(rows) > 0 else False
+            except (AttributeError):
+                table_done = False
+
+            if cnt > 10:
+                table_done = True
+
+        return rows
+
     def GetEarningsData(self, url, loop_num=0):
         self.wd.get('%s' % (url))
         time.sleep(0.1)
@@ -385,12 +458,9 @@ class InvestingStockInfo():
             except (common.exceptions.ElementClickInterceptedException):
                 pass
             except (common.exceptions.NoSuchElementException, Exception):
-                time.sleep(0.5)
-                html = self.wd.page_source
-                bs = BeautifulSoup(html, 'html.parser')
-                tbody = bs.find('table', {'class':'genTbl openTbl ecoCalTbl earnings earningsPageTbl'}).find('tbody')
-                rows = tbody.findAll('tr')
+                #time.sleep(0.5)
 
+                rows = self.readEarningTable()
                 for row in rows:
                     release_date = row['event_timestamp']
 
@@ -406,6 +476,25 @@ class InvestingStockInfo():
                                        , 'revenue_bold': revenue_bold[0]*revenue_bold[1], 'revenue_fore': revenue_fore[0]*revenue_fore[1]})
 
                 return pd.DataFrame(results)
+
+    def readDividendTable(self):
+        cnt = 0
+        table_done = False
+        while table_done == False:
+            cnt += 1
+            try:
+                html = self.wd.page_source
+                bs = BeautifulSoup(html, 'html.parser')
+                tbody = bs.find('table', {'class': 'genTbl closedTbl dividendTbl'}).find('tbody')
+                rows = tbody.findAll('tr')
+                table_done = True if len(rows) > 0 else False
+            except (AttributeError):
+                table_done = False
+
+            if cnt > 10:
+                table_done = True
+
+        return rows
 
     def GetDividendsData(self, url, loop_num=0):
         self.wd.get('%s' % (url))
@@ -426,13 +515,8 @@ class InvestingStockInfo():
             except (common.exceptions.ElementClickInterceptedException):
                 pass
             except (common.exceptions.NoSuchElementException, Exception):
-                time.sleep(0.5)
                 try:
-                    html = self.wd.page_source
-                    bs = BeautifulSoup(html, 'html.parser')
-                    tbody = bs.find('table', {'class':'genTbl closedTbl dividendTbl'}).find('tbody')
-                    rows = tbody.findAll('tr')
-
+                    rows = self.readDividendTable()
                     for row in rows:
                         tmp_tbl = row.findAll('td')
                         ex_date = tmp_tbl[0].text.replace(',', '').split()
@@ -461,10 +545,10 @@ class InvestingStockInfo():
                 self.wd.find_element_by_xpath('//*[@id="widget"]').click()
             except (common.exceptions.ElementClickInterceptedException):
                 period_done = False
-
             #time.sleep(0.1)
 
-    def clikcPeriodBtn(self):
+    def clikcPeriodBtn(self, start_date, end_date):
+        cnt = 0
         btn_done = False
         while btn_done == False:
             btn_done = True
@@ -475,8 +559,12 @@ class InvestingStockInfo():
                 btn_done = False
             except (common.exceptions.NoSuchElementException):
                 btn_done = False
-
             #time.sleep(0.1)
+
+            cnt += 1
+            if cnt % 10 == 0:
+                print('##### setPeriod again #####')
+                self.setPeriod(start_date, end_date)
 
     def readPriceTables(self, start_date, end_date):
         cnt = 0
@@ -491,10 +579,11 @@ class InvestingStockInfo():
                 table_done = True if len(tables) > 0 else False
             except (AttributeError):
                 table_done = False
-
+            '''
             if cnt % 10 == 0:
                 self.setPeriod(start_date, end_date)
                 table_done = True
+            '''
 
         return tables
 
@@ -504,7 +593,7 @@ class InvestingStockInfo():
 
         if set_calendar == True:
             self.setPeriod(start_date, end_date)
-            self.clikcPeriodBtn()
+            self.clikcPeriodBtn(start_date, end_date)
 
         results = []
         rows = self.readPriceTables(start_date, end_date)
@@ -525,50 +614,6 @@ class InvestingStockInfo():
             print('No price Data.')
 
         return pd.DataFrame(results)
-
-    def SelectGroup(self):
-        setting_done = False
-        while setting_done == False:
-            setting_done = True
-            try:
-                if self.country == 'KR':
-                    if self.group == 'KOSPI 200':
-                        group_type = self.wd.find_element_by_xpath('//*[@id="37427"]')
-                    elif self.group == 'KOSDAQ 150':
-                        group_type = self.wd.find_element_by_xpath('//*[@id="980241"]')
-                elif self.country == 'US':
-                    if self.group == 'S&P 500':
-                        group_type = self.wd.find_element_by_xpath('//*[@id="166"]')
-                    elif self.group == 'Nasdaq 100':
-                        group_type = self.wd.find_element_by_xpath('//*[@id="20"]')
-                else:
-                    group_type = self.wd.find_element_by_xpath('//*[@id="all"]')
-                group_type.click()
-            except (common.exceptions.ElementClickInterceptedException):
-                setting_done = False
-            except (common.exceptions.NoSuchElementException):
-                setting_done = False
-
-    def GetWebDriver(self):
-        options = webdriver.ChromeOptions()
-
-        # 크롬을 BackGround에서 실행할 경우
-        do_background = False
-        if do_background == True:
-            options.add_argument('headless')
-            options.add_argument('window-size=1920x1080')
-            options.add_argument("disable-gpu")
-            # 혹은 options.add_argument("--disable-gpu")
-
-        if platform.system() == 'Windows':
-            wd = webdriver.Chrome('chromedriver', chrome_options=options)
-        else:
-            wd = webdriver.Chrome('%s/chromedriver' % (os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))), chrome_options=options)
-
-        return wd
-
-    def Finish(self):
-        self.wd.quit()
 
 
 class InvestingEconomicEventCalendar():
