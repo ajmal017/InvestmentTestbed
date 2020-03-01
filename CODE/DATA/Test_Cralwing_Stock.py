@@ -200,6 +200,9 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
 
                 end_time = time.time()
                 if idx_comp % 30 == 0:
+                    elapse_time = end_time - start_time
+                    mins = int(elapse_time / 60)
+                    secs = int(elapse_time % 60)
                     print('크롤링 실적데이터: ' + str(mins) + 'mins ' + str(secs) + 'secs' + '(' + str(idx_comp + 1) + '/' + str(len(comp_info_list))  + ')')
 
         # 배당 지급 정보 크롤링
@@ -360,7 +363,7 @@ if __name__ == '__main__':
     db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", password="ryumaria")
 
     index_nm_list = ['KOSPI 200', 'KOSDAQ 150', 'S&P 500', 'Nasdaq 100', ]
-    CrawlingData(index_nm_list, do_profile=False, do_financial=False, do_earnings=[True,3], do_dividends=[True,3], do_price_list=[False, False, True], loop_sleep_term=0)
+    CrawlingData(index_nm_list, do_profile=False, do_financial=False, do_earnings=[False,3], do_dividends=[False,3], do_price_list=[True, False, False], loop_sleep_term=0)
     #CrawlingData(options, do_profile=False, do_financial=False, do_earnings=False, do_dividends=True, do_price_list=[False, False, False], loop_sleep_term=0)
     GenerateAdditionalData()
 
