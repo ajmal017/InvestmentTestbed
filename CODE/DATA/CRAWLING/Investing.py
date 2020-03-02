@@ -229,6 +229,7 @@ class InvestingStockInfo():
                 else:
                     group_type = self.wd.find_element_by_xpath('//*[@id="all"]')
                 group_type.click()
+                time.sleep(0.1)
             except (common.exceptions.ElementClickInterceptedException):
                 setting_done = False
             except (common.exceptions.NoSuchElementException):
@@ -325,6 +326,7 @@ class InvestingStockInfo():
                 elif type == 'q':
                     result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[9] / a[2]')
                 result.click()
+                time.sleep(0.1)
             except (common.exceptions.NoSuchElementException):
                 try:
                     if type == 'a':
@@ -332,6 +334,7 @@ class InvestingStockInfo():
                     elif type == 'q':
                         result = self.wd.find_element_by_xpath('// *[ @ id = "leftColumn"] / div[10] / a[2]')
                     result.click()
+                    time.sleep(0.1)
                 except (common.exceptions.ElementClickInterceptedException):
                     page_done = False
             except (common.exceptions.ElementClickInterceptedException):
@@ -454,6 +457,7 @@ class InvestingStockInfo():
 
                 result = self.wd.find_element_by_xpath('//*[@id="showMoreEarningsHistory"]')
                 result.click()
+                time.sleep(0.1)
                 loop_cnt += 1
             except (common.exceptions.ElementClickInterceptedException):
                 pass
@@ -511,6 +515,7 @@ class InvestingStockInfo():
 
                 result = self.wd.find_element_by_xpath('//*[@id="showMoreDividendsHistory"]')
                 result.click()
+                time.sleep(0.1)
                 loop_cnt += 1
             except (common.exceptions.ElementClickInterceptedException):
                 pass
@@ -543,6 +548,7 @@ class InvestingStockInfo():
                 calendar = self.wd.find_element_by_xpath('//*[@id="picker"]')
                 self.wd.execute_script("arguments[0].value = '%s - %s';" % (start_date, end_date), calendar)
                 self.wd.find_element_by_xpath('//*[@id="widget"]').click()
+                time.sleep(0.1)
             except (common.exceptions.ElementClickInterceptedException):
                 period_done = False
             #time.sleep(0.1)
@@ -555,11 +561,11 @@ class InvestingStockInfo():
             try:
                 button = self.wd.find_element_by_xpath('//*[@id="applyBtn"]')
                 self.wd.execute_script("arguments[0].click();", button)
+                time.sleep(0.1)
             except (common.exceptions.ElementClickInterceptedException):
                 btn_done = False
             except (common.exceptions.NoSuchElementException):
                 btn_done = False
-            #time.sleep(0.1)
 
             cnt += 1
             if cnt % 10 == 0:
