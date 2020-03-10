@@ -97,16 +97,16 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
         comp_info_list = db.select_query(query=sql, columns=columns)
 
         # financial 정보 크롤링(anuual: 4년, qualterly: 4분기)
-        if do_financial == True:
+        if do_financial[0] == True:
 
             start_time = time.time()
 
             for idx_comp, comp_info in comp_info_list.iterrows():
-                '''
+
                 # 정상 처리된 종목까지는 패스
-                if idx_comp < 489:
+                if idx_comp < do_financial[1]:
                     continue
-                '''
+
                 financials = obj.GetFinancialData(comp_info['financial_url'])
                 #print(financials)
 
@@ -165,11 +165,11 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
             start_time = time.time()
 
             for idx_comp, comp_info in comp_info_list.iterrows():
-                '''
+
                 # 정상 처리된 종목까지는 패스
-                if idx_comp < 157:
+                if idx_comp < do_earnings[2]:
                     continue
-                '''
+
                 earnings_list = obj.GetEarningsData(comp_info['earnings_url'], loop_num=do_earnings[1])
                 #print(earnings_list)
 
@@ -211,11 +211,11 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
             start_time = time.time()
 
             for idx_comp, comp_info in comp_info_list.iterrows():
-                '''
+
                 # 정상 처리된 종목까지는 패스
-                if idx_comp < 370:
+                if idx_comp < do_dividends[2]:
                     continue
-                '''
+
                 dividends_list = obj.GetDividendsData(comp_info['dividends_url'], loop_num=do_dividends[1])
                 #print(dividends_list)
 
@@ -255,11 +255,11 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
 
             start_date = '1/1/2000'
             for idx_comp, comp_info in comp_info_list.iterrows():
-                '''
+
                 # 정상 처리된 종목까지는 패스
-                if idx_comp < 231:
+                if idx_comp < do_price_list[3]:
                     continue
-                '''
+
                 # 기존 저장된 이후 주가부터 금일까지로 기간 설정
                 check_sql = "SELECT MAX(date) as max_date FROM stock_price" \
                             " WHERE pid='%s'" % (comp_info['pid'])
@@ -275,7 +275,6 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
                 # API를 이용해서 데이터 수신(수신되는 데이터가 완정하지 않음)
                 if do_price_list[1] == True:
                     ihd = Investing.IndiceHistoricalData('https://www.investing.com/instruments/HistoricalDataAjax')
-
                     header = {'name': comp_info['nm'],
                               'curr_id': comp_info['pid'],  # investing.com html에서 'key'로 사용
                               'sort_col': 'date',
@@ -363,7 +362,11 @@ if __name__ == '__main__':
     db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", password="ryumaria")
 
     index_nm_list = ['KOSPI 200', 'KOSDAQ 150', 'S&P 500', 'Nasdaq 100', ]
-    CrawlingData(index_nm_list, do_profile=False, do_financial=False, do_earnings=[False,3], do_dividends=[False,3], do_price_list=[True, False, False], loop_sleep_term=0)
+    # do_financial 0: 실행여부, 1: 시작 index
+    # do_earnings 0: 실행여부, 1: 루프 num, 2: 시작 index
+    # do_dividends 0: 실행여부, 1: 루프 num, 2: 시작 index
+    # do_price_list 0: 실행여부, 1: API 사용여부, 2: Calendar 사용여부, 3: 시작 index
+    CrawlingData(index_nm_list, do_profile=False, do_financial=[False,0], do_earnings=[True,3,70], do_dividends=[False,3,0], do_price_list=[False,False,False,0], loop_sleep_term=0)
     #CrawlingData(options, do_profile=False, do_financial=False, do_earnings=False, do_dividends=True, do_price_list=[False, False, False], loop_sleep_term=0)
     GenerateAdditionalData()
 
