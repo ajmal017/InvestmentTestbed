@@ -188,7 +188,7 @@ class InvestingStockInfo():
         self.dividends_sub = '-dividends'
         self.price_sub = '-historical-data'
 
-    def GetWebDriver(self,do_background):
+    def getWebDriver(self,do_background):
         options = webdriver.ChromeOptions()
 
         # 크롬을 BackGround에서 실행할 경우
@@ -205,8 +205,24 @@ class InvestingStockInfo():
 
         return wd
 
+    def removeAd(self):
+        all_iframes = self.wd.find_elements_by_tag_name("iframe")
+        if len(all_iframes) > 0:
+            #print("Ad Found\n")
+            self.wd.execute_script("""
+                        var elems = document.getElementsByTagName("iframe"); 
+                        for(var i = 0, max = elems.length; i < max; i++)
+                             {
+                                 elems[i].hidden=true;
+                             }
+                                          """)
+            #print('Total Ads: ' + str(len(all_iframes)))
+        else:
+            pass
+            #print('No frames found')
+
     def Start(self, do_background=False):
-        self.wd = self.GetWebDriver(do_background)
+        self.wd = self.getWebDriver(do_background)
 
     def Finish(self):
         self.wd.quit()
@@ -257,6 +273,8 @@ class InvestingStockInfo():
         self.wd.get(self.country_equity_dir[self.country])
         time.sleep(0.1)
 
+        self.removeAd()
+
         # 그룹내 기들의 기본 데이터를 출력
         df = pd.DataFrame(columns=columns)
 
@@ -291,6 +309,8 @@ class InvestingStockInfo():
     def GetProfileData(self, url, df):
         self.wd.get('%s' % (url))
         time.sleep(0.1)
+
+        self.removeAd()
 
         cnt = 0
         page_done = False
@@ -411,6 +431,8 @@ class InvestingStockInfo():
         self.wd.get('%s' % (url))
         time.sleep(0.1)
 
+        self.removeAd()
+
         annual_result = {}
         # Annual 데이터
         if annual == True:
@@ -446,8 +468,9 @@ class InvestingStockInfo():
         self.wd.get('%s' % (url))
         time.sleep(0.1)
 
-        results = []
+        self.removeAd()
 
+        results = []
         loop_cnt = 0
         while 1:
             try:
@@ -504,8 +527,9 @@ class InvestingStockInfo():
         self.wd.get('%s' % (url))
         time.sleep(0.1)
 
-        results = []
+        self.removeAd()
 
+        results = []
         loop_cnt = 0
         while 1:
             try:
@@ -597,6 +621,8 @@ class InvestingStockInfo():
         self.wd.get('%s' % (url))
         time.sleep(0.1)
 
+        self.removeAd()
+
         if set_calendar == True:
             self.setPeriod(start_date, end_date)
             self.clikcPeriodBtn(start_date, end_date)
@@ -639,7 +665,10 @@ class InvestingEconomicEventCalendar():
             self.wd = webdriver.Chrome('%s/chromedriver' % (os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))), chrome_options=self.options)
 
         self.wd.get('https://www.investing.com')
-        time.sleep(5)
+        #time.sleep(5)
+        time.sleep(0.1)
+
+        self.removeAd()
 
     def Start(self, t_gap=0.2, loop_num=float('inf')):
         startTime = timeit.default_timer()
@@ -744,6 +773,9 @@ class InvestingEconomicEventCalendar():
     def GetEventSchedule(self, url, cd, t_gap, loop_num):
 
         self.wd.get(url)
+        time.sleep(0.1)
+
+        self.removeAd()
 
         RESULT_DIRECTORY = '__results__/crawling'
         results = []
