@@ -380,6 +380,7 @@ class InvestingStockInfo():
                 self.clickPeriodTypeInFinancialSummary(type)
                 #table_done = True
 
+        time.sleep(0.1)
         return tables
 
     def readFinancialData(self, type, ret_result):
@@ -462,6 +463,7 @@ class InvestingStockInfo():
             if cnt > 10:
                 table_done = True
 
+        time.sleep(0.1)
         return rows
 
     def GetEarningsData(self, url, loop_num=0):
@@ -485,7 +487,7 @@ class InvestingStockInfo():
             except (common.exceptions.ElementClickInterceptedException):
                 pass
             except (common.exceptions.NoSuchElementException, Exception):
-                #time.sleep(0.5)
+                #time.sleep(0.1)
 
                 rows = self.readEarningTable()
                 for row in rows:
@@ -521,6 +523,7 @@ class InvestingStockInfo():
             if cnt > 10:
                 table_done = True
 
+        time.sleep(0.1)
         return rows
 
     def GetDividendsData(self, url, loop_num=0):
@@ -615,6 +618,7 @@ class InvestingStockInfo():
                 table_done = True
             '''
 
+        time.sleep(0.1)
         return tables
 
     def GetPriceData(self, url, set_calendar=False, start_date='1/1/2000', end_date='12/31/9999'):
