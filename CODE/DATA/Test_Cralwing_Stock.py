@@ -25,7 +25,7 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
     #time.sleep(15)
 
     # 주식의 기본 정보 크롤링
-    if do_profile == True:
+    if do_profile[0] == True:
 
         start_time = time.time()
 
@@ -37,12 +37,12 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
             comp_info_list = obj.GetCompListInIndex(index_nm, columns)
 
             for idx_comp, comp_info in comp_info_list.iterrows():
-                '''
+
                 # 요청이 너무 많은 경우 원격 호스트에 의해 강제로 끊는담.
                 # 처리된 종목까지는 패스
-                if idx_comp > 5:
+                if idx_comp > do_profile[1]:
                     continue
-                '''
+
                 # 동일 종목이 기존에 처리된 지수에 중복 편입되어 있는 경우 패스
                 if comp_info['pid'] in stocks_list:
                     print(comp_info['nm'] + '는 이미 등록되어 있음.')
@@ -366,7 +366,7 @@ if __name__ == '__main__':
     # do_earnings 0: 실행여부, 1: 루프 num, 2: 시작 index
     # do_dividends 0: 실행여부, 1: 루프 num, 2: 시작 index
     # do_price_list 0: 실행여부, 1: API 사용여부, 2: Calendar 사용여부, 3: 시작 index
-    CrawlingData(index_nm_list, do_profile=False, do_financial=[False,0], do_earnings=[True,3,70], do_dividends=[False,3,0], do_price_list=[False,False,False,0], loop_sleep_term=0)
+    CrawlingData(index_nm_list, do_profile=[False,0], do_financial=[False,0], do_earnings=[False,0,0], do_dividends=[False,0,0], do_price_list=[True,False,True,0], loop_sleep_term=1)
     #CrawlingData(options, do_profile=False, do_financial=False, do_earnings=False, do_dividends=True, do_price_list=[False, False, False], loop_sleep_term=0)
     GenerateAdditionalData()
 
