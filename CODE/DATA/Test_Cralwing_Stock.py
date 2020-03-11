@@ -12,6 +12,7 @@ import numpy as np
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 warnings.filterwarnings("ignore")
@@ -326,6 +327,28 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
                         print('에러정보 : ', e, file=sys.stderr)
 
                 print("%s: %s, %s, %s" % (idx_comp, comp_info['pid'], comp_info['nm'], price_idx))
+
+                
+                # 비영업일 종가 전일 종가로 카피
+                sql = "SELECT pid, date, close, open  FROM stock_price" \
+                      " WHERE pid='%s'" % (comp_info['pid'])
+                columns = ['pid', 'date', 'close', 'open']
+                p_data_list = db.select_query(query=sql, columns=columns)
+                for p_data_idx, p_data in p_data_list.iterrows():
+                    if p_data_idx > 0:
+                        term = (datetime.strptime(p_data['date'], '%Y-%m-%d').date() - datetime.strptime(prev_date, '%Y-%m-%d').date()).days
+
+                        if term > 1:
+                            for n in range(term-1):
+                                nonbis_date = str(datetime.strptime(prev_date, '%Y-%m-%d').date() + relativedelta(days=n+1))
+                                sql = "INSERT INTO stock_price (pid, date, close, open) " \
+                                      "VALUES ('%s', '%s', %s, %s) ON DUPLICATE KEY UPDATE close = %s, open = %s"
+                                sql_arg = (comp_info['pid'], nonbis_date, prev_close, p_data['open'], prev_close, p_data['open'])
+                                #print(sql % (sql_arg))
+                                db.execute_query(sql, sql_arg)
+
+                    prev_date = p_data['date']
+                    prev_close = p_data['close']
 
                 time.sleep(loop_sleep_term)
 
