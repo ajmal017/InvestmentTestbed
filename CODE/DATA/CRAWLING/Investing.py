@@ -56,6 +56,22 @@ def getRealValue(s):
 
         return None, None
 
+def removeAd(wd):
+    all_iframes = wd.find_elements_by_tag_name("iframe")
+    if len(all_iframes) > 0:
+        #print("Ad Found\n")
+        wd.execute_script("""
+                    var elems = document.getElementsByTagName("iframe"); 
+                    for(var i = 0, max = elems.length; i < max; i++)
+                         {
+                             elems[i].hidden=true;
+                         }
+                                      """)
+        #print('Total Ads: ' + str(len(all_iframes)))
+    else:
+        pass
+        #print('No frames found')
+
 
 class Good():
     def __init__(self):
@@ -169,8 +185,8 @@ calendar_map = {'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6, 'Jul
               , 'Q1': 1, 'Q2': 2, 'Q3': 3, 'Q4': 4}
 group_country_dict = {'KOSPI 200': 'KR', 'KOSDAQ 150': 'KR', 'S&P 500': 'US', 'Nasdaq 100': 'US'}
 
-def CrawlingStart(obj):
-    obj.Start()
+def CrawlingStart(obj, t_gap, loop_num):
+    obj.Start(t_gap=t_gap, loop_num=loop_num)
 
 class InvestingStockInfo():
     def __init__(self, db, country='KR', group='KOSPI 200'):
@@ -204,22 +220,6 @@ class InvestingStockInfo():
             wd = webdriver.Chrome('%s/chromedriver' % (os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))), chrome_options=options)
 
         return wd
-
-    def removeAd(self):
-        all_iframes = self.wd.find_elements_by_tag_name("iframe")
-        if len(all_iframes) > 0:
-            #print("Ad Found\n")
-            self.wd.execute_script("""
-                        var elems = document.getElementsByTagName("iframe"); 
-                        for(var i = 0, max = elems.length; i < max; i++)
-                             {
-                                 elems[i].hidden=true;
-                             }
-                                          """)
-            #print('Total Ads: ' + str(len(all_iframes)))
-        else:
-            pass
-            #print('No frames found')
 
     def Start(self, do_background=False):
         self.wd = self.getWebDriver(do_background)
@@ -273,7 +273,7 @@ class InvestingStockInfo():
         self.wd.get(self.country_equity_dir[self.country])
         time.sleep(0.1)
 
-        self.removeAd()
+        removeAd(self.wd)
 
         # 그룹내 기들의 기본 데이터를 출력
         df = pd.DataFrame(columns=columns)
@@ -310,7 +310,7 @@ class InvestingStockInfo():
         self.wd.get('%s' % (url))
         time.sleep(0.1)
 
-        self.removeAd()
+        removeAd(self.wd)
 
         cnt = 0
         page_done = False
@@ -432,7 +432,7 @@ class InvestingStockInfo():
         self.wd.get('%s' % (url))
         time.sleep(0.1)
 
-        self.removeAd()
+        removeAd(self.wd)
 
         annual_result = {}
         # Annual 데이터
@@ -470,7 +470,7 @@ class InvestingStockInfo():
         self.wd.get('%s' % (url))
         time.sleep(0.1)
 
-        self.removeAd()
+        removeAd(self.wd)
 
         results = []
         loop_cnt = 0
@@ -530,7 +530,7 @@ class InvestingStockInfo():
         self.wd.get('%s' % (url))
         time.sleep(0.1)
 
-        self.removeAd()
+        removeAd(self.wd)
 
         results = []
         loop_cnt = 0
@@ -625,7 +625,7 @@ class InvestingStockInfo():
         self.wd.get('%s' % (url))
         time.sleep(0.1)
 
-        self.removeAd()
+        removeAd(self.wd)
 
         if set_calendar == True:
             self.setPeriod(start_date, end_date)
@@ -653,7 +653,7 @@ class InvestingStockInfo():
 
 
 class InvestingEconomicEventCalendar():
-    def __init__(self, econmic_event_list, db):
+    def __init__(self, econmic_event_list, db, process_idx=None):
         self.economic_event_list = econmic_event_list
         self.db = db
         self.options = webdriver.ChromeOptions()
@@ -666,13 +666,16 @@ class InvestingEconomicEventCalendar():
         if platform.system() == 'Windows':
             self.wd = webdriver.Chrome('chromedriver', chrome_options=self.options)
         else:
-            self.wd = webdriver.Chrome('%s/chromedriver' % (os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))), chrome_options=self.options)
+            if process_idx == None:
+                self.wd = webdriver.Chrome('%s/chromedriver' % (os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))), chrome_options=self.options)
+            else:
+                self.wd = webdriver.Chrome('%s/chromedriver %s' % (os.path.abspath(os.path.join(os.path.dirname(__file__), '..')), process_idx), chrome_options=self.options)
 
         self.wd.get('https://www.investing.com')
         #time.sleep(5)
         time.sleep(0.1)
 
-        self.removeAd()
+        removeAd(self.wd)
 
     def Start(self, t_gap=0.2, loop_num=float('inf')):
         startTime = timeit.default_timer()
@@ -779,12 +782,12 @@ class InvestingEconomicEventCalendar():
         self.wd.get(url)
         time.sleep(0.1)
 
-        self.removeAd()
+        removeAd(self.wd)
 
         RESULT_DIRECTORY = '__results__/crawling'
         results = []
         loop_cnt = 0
-        for page in count(1):
+        while 1:
             try:
                 # 정해진 횟수만 크롤링
                 if loop_cnt >= loop_num:
@@ -795,8 +798,8 @@ class InvestingEconomicEventCalendar():
                 script = 'void(0)'  # 사용하는 페이지를 이동시키는 js 코드
                 # self.wd.execute_script(script)  # js 실행
                 result = self.wd.find_element_by_xpath('//*[@id="showMoreHistory%s"]/a' % cd)
-                #result.click()
-                self.wd.execute_script("arguments[0].click();", result)
+                result.click()
+                #self.wd.execute_script("arguments[0].click();", result)
                 time.sleep(t_gap)  # 크롤링 로직을 수행하기 위해 5초정도 쉬어준다.
             except:
                 # print('error: %s' % str(page))
