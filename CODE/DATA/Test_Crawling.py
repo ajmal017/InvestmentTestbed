@@ -29,7 +29,6 @@ from dateutil.relativedelta import relativedelta
 MULTI_PROCESS = False
 
 
-
 # 등록된 Economic Event 리스트의 데이터를 크롤링
 # Economic Event 리스트는 investing.com의 Economic Calendar에서 수집 후 엑셀 작업으로 DB에 insert
 # 미국, 중국, 한국의 모든 이벤트
@@ -43,7 +42,7 @@ def CrawlEconomicEventValues(t_gap=0.2, loop_num=3):
 
     # 병렬처리 개발중
     if MULTI_PROCESS == True:
-        max_process_num = 2
+        max_process_num = 3
         jobs = []
 
         # 병렬처리를 위해 datas를 datas_split array로 분할
@@ -53,12 +52,12 @@ def CrawlEconomicEventValues(t_gap=0.2, loop_num=3):
             print(i*unit_size,min((i+1)*unit_size,len(datas)))
 
             # chromedriver를 이용하여 session 연결
-            session = Investing.InvestingEconomicEventCalendar(sub_datas, db)
-            p = mp.Process(target=Investing.CrawlingStart, args=(session,))
+            session = Investing.InvestingEconomicEventCalendar(sub_datas, db, i+1)
+            p = mp.Process(target=Investing.CrawlingStart, args=(session, t_gap, loop_num))
             jobs.append(p)
             p.start()
 
-            time.sleep(90)
+            time.sleep(1)
 
         # Iterate through the list of jobs and remove one that are finished, checking every second.
         count_loop = 0
@@ -175,13 +174,13 @@ if __name__ == '__main__':
     db = DB_Util.DB()
     db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", password="ryumaria")
 
-    if 1:
+    if 0:
         satrt_date = '1/1/2000'
         end_date = '1/3/2020'
         CrawlHistoricalPrices(satrt_date, end_date)
 
-    if 0:
-        t_gap = 0.2
+    if 1:
+        t_gap = 0.1
         loop_num = 3
         CrawlEconomicEventValues(t_gap, loop_num)
 
