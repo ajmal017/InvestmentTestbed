@@ -384,12 +384,12 @@ if __name__ == '__main__':
     db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", password="ryumaria")
 
     #index_nm_list = ['NASDAQ Composite', 'KOSPI 200', 'KOSDAQ 150', 'S&P 500', 'Nasdaq 100', ]
-    index_nm_list = ['United States all stocks']
+    index_nm_list = ['NASDAQ Composite', 'United States all stocks', ]
     # do_financial 0: 실행여부, 1: 시작 index
     # do_earnings 0: 실행여부, 1: 루프 num, 2: 시작 index
     # do_dividends 0: 실행여부, 1: 루프 num, 2: 시작 index
     # do_price_list 0: 실행여부, 1: API 사용여부, 2: Calendar 사용여부, 3: 시작 index
-    CrawlingData(index_nm_list, do_profile=[True,0], do_financial=[False,0], do_earnings=[False,0,0], do_dividends=[False,0,0], do_price_list=[False,False,True,0], loop_sleep_term=1)
+    CrawlingData(index_nm_list, do_profile=[True,0], do_financial=[True,0], do_earnings=[True,0,0], do_dividends=[True,0,0], do_price_list=[True,False,True,0], loop_sleep_term=1)
     #CrawlingData(options, do_profile=False, do_financial=False, do_earnings=False, do_dividends=True, do_price_list=[False, False, False], loop_sleep_term=0)
     GenerateAdditionalData()
 

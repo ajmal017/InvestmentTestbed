@@ -328,7 +328,7 @@ class InvestingStockInfo():
             html = self.wd.page_source
             bs = BeautifulSoup(html, 'html.parser')
             tbody = bs.find('div', {'class': 'companyProfileHeader'})
-            page_done = True if len(tbody) > 0 or cnt > 10 else False
+            page_done = True if (type(tbody) != 'NoneType' and len(tbody) > 0) or cnt > 10 else False
 
         # 시가총액이 작은 기없의 경우 데이터가 없는 경우 있음
         if tbody == None:
