@@ -41,7 +41,7 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
 
                 # 요청이 너무 많은 경우 원격 호스트에 의해 강제로 끊는담.
                 # 처리된 종목까지는 패스
-                if idx_comp > do_profile[1]:
+                if idx_comp < do_profile[1]:
                     continue
 
                 # 동일 종목이 기존에 처리된 지수에 중복 편입되어 있는 경우 패스
@@ -383,12 +383,13 @@ if __name__ == '__main__':
     db = DB_Util.DB()
     db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", password="ryumaria")
 
-    index_nm_list = ['KOSPI 200', 'KOSDAQ 150', 'S&P 500', 'Nasdaq 100', ]
+    #index_nm_list = ['NASDAQ Composite', 'KOSPI 200', 'KOSDAQ 150', 'S&P 500', 'Nasdaq 100', ]
+    index_nm_list = ['United States all stocks']
     # do_financial 0: 실행여부, 1: 시작 index
     # do_earnings 0: 실행여부, 1: 루프 num, 2: 시작 index
     # do_dividends 0: 실행여부, 1: 루프 num, 2: 시작 index
     # do_price_list 0: 실행여부, 1: API 사용여부, 2: Calendar 사용여부, 3: 시작 index
-    CrawlingData(index_nm_list, do_profile=[False,0], do_financial=[False,0], do_earnings=[False,0,0], do_dividends=[False,0,0], do_price_list=[True,False,True,0], loop_sleep_term=1)
+    CrawlingData(index_nm_list, do_profile=[True,0], do_financial=[False,0], do_earnings=[False,0,0], do_dividends=[False,0,0], do_price_list=[False,False,True,0], loop_sleep_term=1)
     #CrawlingData(options, do_profile=False, do_financial=False, do_earnings=False, do_dividends=True, do_price_list=[False, False, False], loop_sleep_term=0)
     GenerateAdditionalData()
 

@@ -7,6 +7,7 @@ from urllib.error import HTTPError
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
 from selenium import common
 import datetime
 import time
@@ -183,7 +184,7 @@ class InvestingEconomicCalendar():
 
 calendar_map = {'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6, 'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
               , 'Q1': 1, 'Q2': 2, 'Q3': 3, 'Q4': 4}
-group_country_dict = {'KOSPI 200': 'KR', 'KOSDAQ 150': 'KR', 'S&P 500': 'US', 'Nasdaq 100': 'US'}
+group_country_dict = {'United States all stocks': 'US', 'NASDAQ Composite': 'US', 'KOSPI 200': 'KR', 'KOSDAQ 150': 'KR', 'S&P 500': 'US', 'Nasdaq 100': 'US'}
 
 def CrawlingStart(obj, t_gap, loop_num):
     obj.Start(t_gap=t_gap, loop_num=loop_num)
@@ -242,14 +243,22 @@ class InvestingStockInfo():
                         group_type = self.wd.find_element_by_xpath('//*[@id="166"]')
                     elif self.group == 'Nasdaq 100':
                         group_type = self.wd.find_element_by_xpath('//*[@id="20"]')
-                else:
-                    group_type = self.wd.find_element_by_xpath('//*[@id="all"]')
+                    elif self.group == 'NASDAQ Composite':
+                        group_type = self.wd.find_element_by_xpath('//*[@id="14958"]')
+                    elif self.group == 'United States all stocks':
+                        group_type = self.wd.find_element_by_xpath('//*[@id="all"]')
                 group_type.click()
                 time.sleep(0.1)
             except (common.exceptions.ElementClickInterceptedException):
                 setting_done = False
             except (common.exceptions.NoSuchElementException):
                 setting_done = False
+        '''
+        body = self.wd.find_element_by_css_selector('body')
+        for i in range(10):
+            body.send_keys(Keys.PAGE_DOWN)
+            time.sleep(1)
+        '''
 
     def readCompsTable(self):
         table_done = False
@@ -324,8 +333,8 @@ class InvestingStockInfo():
         # 시가총액이 작은 기없의 경우 데이터가 없는 경우 있음
         if tbody == None:
             return df
-        rows = tbody.findAll('div')
 
+        rows = tbody.findAll('div')
         for idx, row in enumerate(rows):
             if idx == 0:
                 df['industry'] = row.text.replace('Industry', '')
