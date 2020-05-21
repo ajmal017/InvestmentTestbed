@@ -330,7 +330,7 @@ class InvestingStockInfo():
             tbody = bs.find('div', {'class': 'companyProfileHeader'})
             page_done = True if (tbody is not None and len(tbody) > 0) or cnt > 10 else False
 
-        # 시가총액이 작은 기없의 경우 데이터가 없는 경우 있음
+        # 시가총액이 작은 기업의 경우 데이터가 없을 수 있음
         if tbody == None:
             return df
 
@@ -342,6 +342,8 @@ class InvestingStockInfo():
                 df['sector'] = row.text.replace('Sector', '')
             else:
                 break
+
+        df['market'] = bs.find('i', {'class': 'btnTextDropDwn arial_12 bold'}).text
 
         return df
 
@@ -393,6 +395,14 @@ class InvestingStockInfo():
         return tables
 
     def readFinancialData(self, type, ret_result):
+
+        # Financial Summary에 데이터가 없는 경우 pass
+        html = self.wd.page_source
+        bs = BeautifulSoup(html, 'html.parser')
+        ins_body = bs.findAll('div', {'class': 'instrumentSummaryBody'})
+        if len(ins_body) == 0:
+            return ret_result
+
         self.clickPeriodTypeInFinancialSummary(type)
         tables = self.readFinancialSummaryTables(type)
 

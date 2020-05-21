@@ -61,13 +61,15 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
                 #print(comp_info)
 
                 # 크롤링된 종목 정보를 DB 저장
-                sql = "INSERT INTO stock_master (pid, country, nm, industry, sector, url, profile_url, financial_url, earnings_url, dividends_url, price_url, create_time, update_time)" \
-                      "VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', now(), now())" \
-                      "ON DUPLICATE KEY UPDATE country='%s', nm='%s', industry='%s', sector='%s', url='%s', profile_url='%s', financial_url='%s'" \
+                sql = "INSERT INTO stock_master (pid, country, nm, industry, sector, market, url, profile_url, financial_url, earnings_url, dividends_url, price_url, create_time, update_time)" \
+                      "VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', now(), now())" \
+                      "ON DUPLICATE KEY UPDATE country='%s', nm='%s', industry='%s', sector='%s', market='%s', url='%s', profile_url='%s', financial_url='%s'" \
                       ", earnings_url='%s', dividends_url='%s', price_url='%s', update_time = now()"
-                sql_arg = (comp_info['pid'], comp_info['country'], comp_info['nm'], comp_info['industry'], comp_info['sector'], comp_info['url'], comp_info['profile_url'], comp_info['financial_url']
+                sql_arg = (comp_info['pid'], comp_info['country'], comp_info['nm'], comp_info['industry'], comp_info['sector'], comp_info['market']
+                           , comp_info['url'], comp_info['profile_url'], comp_info['financial_url']
                            , comp_info['earnings_url'], comp_info['dividends_url'], comp_info['price_url']
-                           , comp_info['country'], comp_info['nm'], comp_info['industry'], comp_info['sector'], comp_info['url'], comp_info['profile_url'], comp_info['financial_url']
+                           , comp_info['country'], comp_info['nm'], comp_info['industry'], comp_info['sector'], comp_info['market']
+                           , comp_info['url'], comp_info['profile_url'], comp_info['financial_url']
                            , comp_info['earnings_url'], comp_info['dividends_url'], comp_info['price_url'])
                 if (db.execute_query(sql, sql_arg) == False):
                     print("stock_master insert error(%s: %s)" % (comp_info['pid'], comp_info['nm']))
