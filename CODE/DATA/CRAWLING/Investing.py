@@ -311,7 +311,7 @@ class InvestingStockInfo():
             comp_dividends_url = comp_dir + self.dividends_sub
             comp_price_url = comp_dir + self.price_sub
 
-            df.loc[idx_data] = [pid, self.country, nm, None, None, comp_dir, comp_profile_url, comp_financial_url, comp_earnings_url, comp_dividends_url, comp_price_url]
+            df.loc[idx_data] = [pid, self.country, nm, None, None, None, comp_dir, comp_profile_url, comp_financial_url, comp_earnings_url, comp_dividends_url, comp_price_url]
 
         return df
 
