@@ -211,9 +211,10 @@ class InvestingStockInfo():
         # 크롬을 BackGround에서 실행할 경우
         if do_background == True:
             options.add_argument('headless')
-            options.add_argument('window-size=1920x1080')
-            options.add_argument("disable-gpu")
+            #options.add_argument('window-size=1920x1080')
             # 혹은 options.add_argument("--disable-gpu")
+            #options.add_argument("disable-gpu")
+        options.add_argument("--disable-popup-blocking")
 
         if platform.system() == 'Windows':
             wd = webdriver.Chrome('chromedriver', chrome_options=options)
@@ -304,12 +305,21 @@ class InvestingStockInfo():
             pcp = data.find('td', {'class': 'pid-%s-pcp' % (pid)}).text
             turnover = data.find('td', {'class': 'pid-%s-turnover' % (pid)}).text
 
-            comp_dir = self.root_dir + comp_sub_dir
-            comp_profile_url = comp_dir + self.profile_sub
-            comp_financial_url = comp_dir + self.financial_sub
-            comp_earnings_url = comp_dir + self.earnings_sub
-            comp_dividends_url = comp_dir + self.dividends_sub
-            comp_price_url = comp_dir + self.price_sub
+            # 교차상장된 종목의 경우 주소 생성 방법이 다름
+            p = comp_sub_dir.find('?')
+            if p == -1:
+                comp_sub_dir_pre = comp_sub_dir
+                comp_sub_dir_post = ''
+            else:
+                comp_sub_dir_pre = comp_sub_dir[:p]
+                comp_sub_dir_post = comp_sub_dir[p:]
+
+            comp_dir = self.root_dir + comp_sub_dir_pre + comp_sub_dir_post
+            comp_profile_url = self.root_dir + comp_sub_dir_pre + self.profile_sub + comp_sub_dir_post
+            comp_financial_url = self.root_dir + comp_sub_dir_pre + self.financial_sub + comp_sub_dir_post
+            comp_earnings_url = self.root_dir + comp_sub_dir_pre + self.earnings_sub + comp_sub_dir_post
+            comp_dividends_url = self.root_dir + comp_sub_dir_pre + self.dividends_sub + comp_sub_dir_post
+            comp_price_url = self.root_dir + comp_sub_dir_pre + self.price_sub + comp_sub_dir_post
 
             df.loc[idx_data] = [pid, self.country, nm, None, None, None, comp_dir, comp_profile_url, comp_financial_url, comp_earnings_url, comp_dividends_url, comp_price_url]
 
@@ -481,6 +491,7 @@ class InvestingStockInfo():
 
             if cnt > 10:
                 table_done = True
+                rows = []
 
         time.sleep(0.1)
         return rows
@@ -541,6 +552,7 @@ class InvestingStockInfo():
 
             if cnt > 10:
                 table_done = True
+                rows = []
 
         time.sleep(0.1)
         return rows
