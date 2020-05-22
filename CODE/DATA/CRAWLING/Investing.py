@@ -404,7 +404,9 @@ class InvestingStockInfo():
         time.sleep(0.1)
         return tables
 
-    def readFinancialData(self, type, ret_result):
+    def readFinancialData(self, type, select_term_type=True):
+
+        ret_result = {}
 
         # Financial Summary에 데이터가 없는 경우 pass
         html = self.wd.page_source
@@ -413,7 +415,9 @@ class InvestingStockInfo():
         if len(ins_body) == 0:
             return ret_result
 
-        self.clickPeriodTypeInFinancialSummary(type)
+        # 처음 열렸을 Financial 페이지 오픈 시 term type이 quaterly로 시작 되어 해당 버튼 클릭 필요 없음
+        if select_term_type == True:
+            self.clickPeriodTypeInFinancialSummary(type)
         tables = self.readFinancialSummaryTables(type)
 
         for table in tables:
@@ -457,21 +461,17 @@ class InvestingStockInfo():
 
         return ret_result
 
-    def GetFinancialData(self, url, annual=True, quaterly=True):
+    def GetFinancialData(self, url):
         self.wd.get('%s' % (url))
         time.sleep(0.1)
 
         removeAd(self.wd)
 
-        annual_result = {}
-        # Annual 데이터
-        if annual == True:
-            annual_result = self.readFinancialData(type='a', ret_result=annual_result)
-
-        quaterly_result = {}
         # Quarterly 데이터
-        if quaterly == True:
-            quaterly_result = self.readFinancialData(type='q', ret_result=quaterly_result)
+        quaterly_result = self.readFinancialData(type='q', select_term_type=False)
+
+        # Annual 데이터
+        annual_result = self.readFinancialData(type='a', select_term_type=True)
 
         return {'annual': pd.DataFrame(annual_result), 'quaterly': pd.DataFrame(quaterly_result)}
 

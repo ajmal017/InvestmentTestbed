@@ -312,17 +312,18 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
                         if do_price_list[1] == True:
                             p_date = price['Date'].replace(',', '').split()
                             p_date = str(date(int(p_date[2]), Investing.calendar_map[p_date[0]], int(p_date[1])))
+
+                            value, unit = Investing.getRealValue(price['Vol.'])
+                            vol = int(value * unit) if value != 'NULL' or unit != 'NULL' else 'NULL'
                         else:
                             p_date = price['Date']
+                            vol = price['Vol.']
+
                         close = price['Price']
                         open = price['Open']
                         high = price['High']
                         low = price['Low']
-                        if do_price_list[1] == True:
-                            value, unit = Investing.getRealValue(price['Vol.'])
-                            vol = int(value * unit) if value != 'NULL' or unit != 'NULL' else 'NULL'
-                        else:
-                            vol = price['Vol.']
+
                         '''
                         # API를 통해 얻은 데이터의 기간이 설정보다 많은 데이터를 가지고 오는 경우 과거 데이터는 패스
                         if datetime.strptime(p_date, '%Y-%m-%d').date() <= datetime.strptime(start_date, '%m/%d/%Y').date():
@@ -400,7 +401,7 @@ if __name__ == '__main__':
     # do_earnings 0: 실행여부, 1: 루프 num, 2: 시작 index
     # do_dividends 0: 실행여부, 1: 루프 num, 2: 시작 index
     # do_price_list 0: 실행여부, 1: API 사용여부, 2: Calendar 사용여부, 3: 시작 index
-    CrawlingData(index_nm_list, do_profile=[False,0], do_financial=[True,0], do_earnings=[True,0,0], do_dividends=[True,0,0], do_price_list=[True,False,True,0], loop_sleep_term=1)
+    CrawlingData(index_nm_list, do_profile=[False,0], do_financial=[True,0], do_earnings=[False,0,0], do_dividends=[False,0,0], do_price_list=[True,False,True,0], loop_sleep_term=1)
     #CrawlingData(options, do_profile=False, do_financial=False, do_earnings=False, do_dividends=True, do_price_list=[False, False, False], loop_sleep_term=0)
     GenerateAdditionalData()
 
