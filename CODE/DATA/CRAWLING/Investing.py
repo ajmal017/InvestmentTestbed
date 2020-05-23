@@ -690,9 +690,10 @@ class InvestingEconomicEventCalendar():
         self.options = webdriver.ChromeOptions()
         if 0:
             self.options.add_argument('headless')
-            self.options.add_argument('window-size=1920x1080')
-            self.options.add_argument("disable-gpu")
+            #self.options.add_argument('window-size=1920x1080')
+            #self.options.add_argument("disable-gpu")
             # 혹은 options.add_argument("--disable-gpu")
+        self.options.add_argument("disable-popup-blocking")
 
         if platform.system() == 'Windows':
             self.wd = webdriver.Chrome('chromedriver', chrome_options=self.options)
@@ -822,9 +823,8 @@ class InvestingEconomicEventCalendar():
             try:
                 # 정해진 횟수만 크롤링
                 if loop_cnt >= loop_num:
+                    print(url + '\t' + str(loop_cnt) + '/' + str(loop_num))
                     raise Exception('loop_cnt: ' % loop_cnt)
-                else:
-                    loop_cnt += 1
 
                 script = 'void(0)'  # 사용하는 페이지를 이동시키는 js 코드
                 # self.wd.execute_script(script)  # js 실행
@@ -832,6 +832,23 @@ class InvestingEconomicEventCalendar():
                 result.click()
                 #self.wd.execute_script("arguments[0].click();", result)
                 time.sleep(t_gap)  # 크롤링 로직을 수행하기 위해 5초정도 쉬어준다.
+
+                # body의 contents 업데이트 없이 loop_cnt만 올라가는 것을 막기 위함
+                if loop_cnt > 0:
+                    html = self.wd.page_source
+                    bs = BeautifulSoup(html, 'html.parser')
+                    nm = bs.find('body').find('section').find('h1').text.strip()
+                    tbody = bs.find('tbody')
+                    rows = tbody.findAll('tr')
+
+                    if len(rows) > prev_conts_cnt:
+                        loop_cnt += 1
+                        prev_conts_cnt = len(rows)
+
+                else:
+                    loop_cnt += 1
+                    prev_conts_cnt = 0
+
             except:
                 # print('error: %s' % str(page))
 

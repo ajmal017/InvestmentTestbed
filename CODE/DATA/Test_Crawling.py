@@ -32,7 +32,7 @@ MULTI_PROCESS = False
 # 등록된 Economic Event 리스트의 데이터를 크롤링
 # Economic Event 리스트는 investing.com의 Economic Calendar에서 수집 후 엑셀 작업으로 DB에 insert
 # 미국, 중국, 한국의 모든 이벤트
-def CrawlEconomicEventValues(t_gap=0.2, loop_num=3):
+def CrawlEconomicEventValues(t_gap=0.2, loop_num=float('inf')):
     # Economic Event 리스트 select
     datas = db.select_query("SELECT cd, nm_us, link, ctry, period, type"
                             "  FROM economic_events"
@@ -182,7 +182,7 @@ if __name__ == '__main__':
     if 1:
         t_gap = 0.1
         loop_num = 3
-        CrawlEconomicEventValues(t_gap, loop_num)
+        CrawlEconomicEventValues(t_gap)
 
     # 당일 Economic Event 리스트 크롤링
     if 0:
