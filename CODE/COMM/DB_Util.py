@@ -87,7 +87,8 @@ class DB(object):
         data = self.cursor.fetchall()
         df = pd.DataFrame(data)
 
-        if columns != None:
+        # 저장된 데이터가 없는 경우
+        if df.empty == False and columns != None:
             df.columns = columns
 
         return df
