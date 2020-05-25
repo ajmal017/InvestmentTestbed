@@ -34,14 +34,14 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
         stocks_list = []
 
         # 기존에 등록되어 있는 종목은 pass
-        sql = "SELECT pid FROM stock_master WHERE market IS NOT NULL"
+        sql = "SELECT pid FROM stock_master WHERE market IS NOT NULL and ticker IS NOT NULL"
         columns = ['pid']
         stocks_list += list(db.select_query(query=sql, columns=columns)['pid'])
 
         for idx, index_nm in enumerate(index_nm_list):
 
             # 대표지수에 포함되어 있는 종목 리스트 및 필요 정보 크롤링
-            columns = ['pid', 'country', 'nm', 'industry', 'sector', 'market', 'url', 'profile_url', 'financial_url', 'earnings_url', 'dividends_url', 'price_url']
+            columns = ['pid', 'country', 'nm', 'ticker', 'industry', 'sector', 'market', 'url', 'profile_url', 'financial_url', 'earnings_url', 'dividends_url', 'price_url']
             comp_info_list = obj.GetCompListInIndex(index_nm, columns)
 
             for idx_comp, comp_info in comp_info_list.iterrows():
@@ -68,15 +68,15 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
                 #print(comp_info)
 
                 # 크롤링된 종목 정보를 DB 저장
-                sql = "INSERT INTO stock_master (pid, country, nm, industry, sector, market, url, profile_url, financial_url, earnings_url, dividends_url, price_url, create_time, update_time)" \
-                      "VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', now(), now())" \
-                      "ON DUPLICATE KEY UPDATE country='%s', nm='%s', industry='%s', sector='%s', market='%s'" \
+                sql = "INSERT INTO stock_master (pid, country, nm, ticker, industry, sector, market, url, profile_url, financial_url, earnings_url, dividends_url, price_url, create_time, update_time)" \
+                      "VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', now(), now())" \
+                      "ON DUPLICATE KEY UPDATE country='%s', nm='%s', ticker='%s', industry='%s', sector='%s', market='%s'" \
                       ", url='%s', profile_url='%s', financial_url='%s'" \
                       ", earnings_url='%s', dividends_url='%s', price_url='%s', update_time = now()"
-                sql_arg = (comp_info['pid'], comp_info['country'], comp_info['nm'], comp_info['industry'], comp_info['sector'], comp_info['market']
+                sql_arg = (comp_info['pid'], comp_info['country'], comp_info['nm'], comp_info['ticker'], comp_info['industry'], comp_info['sector'], comp_info['market']
                            , comp_info['url'], comp_info['profile_url'], comp_info['financial_url']
                            , comp_info['earnings_url'], comp_info['dividends_url'], comp_info['price_url']
-                           , comp_info['country'], comp_info['nm'], comp_info['industry'], comp_info['sector'], comp_info['market']
+                           , comp_info['country'], comp_info['nm'], comp_info['ticker'], comp_info['industry'], comp_info['sector'], comp_info['market']
                            , comp_info['url'], comp_info['profile_url'], comp_info['financial_url']
                            , comp_info['earnings_url'], comp_info['dividends_url'], comp_info['price_url'])
                 if (db.execute_query(sql, sql_arg) == False):
@@ -407,7 +407,7 @@ if __name__ == '__main__':
     # do_earnings 0: 실행여부, 1: 루프 num, 2: 시작 index
     # do_dividends 0: 실행여부, 1: 루프 num, 2: 시작 index
     # do_price_list 0: 실행여부, 1: API 사용여부, 2: Calendar 사용여부, 3: 시작 index
-    CrawlingData(index_nm_list, do_profile=[False,0], do_financial=[False,0], do_earnings=[False,0,0], do_dividends=[False,0,0], do_price_list=[True,True,True,0], loop_sleep_term=1)
+    CrawlingData(index_nm_list, do_profile=[True,0], do_financial=[False,0], do_earnings=[False,0,0], do_dividends=[False,0,0], do_price_list=[True,True,True,0], loop_sleep_term=1)
     #CrawlingData(options, do_profile=False, do_financial=False, do_earnings=False, do_dividends=True, do_price_list=[False, False, False], loop_sleep_term=0)
     GenerateAdditionalData()
 

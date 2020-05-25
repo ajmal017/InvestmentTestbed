@@ -321,7 +321,7 @@ class InvestingStockInfo():
             comp_dividends_url = self.root_dir + comp_sub_dir_pre + self.dividends_sub + comp_sub_dir_post
             comp_price_url = self.root_dir + comp_sub_dir_pre + self.price_sub + comp_sub_dir_post
 
-            df.loc[idx_data] = [pid, self.country, nm, None, None, None, comp_dir, comp_profile_url, comp_financial_url, comp_earnings_url, comp_dividends_url, comp_price_url]
+            df.loc[idx_data] = [pid, self.country, nm, None, None, None, None, comp_dir, comp_profile_url, comp_financial_url, comp_earnings_url, comp_dividends_url, comp_price_url]
 
         return df
 
@@ -354,6 +354,7 @@ class InvestingStockInfo():
                 break
 
         df['market'] = bs.find('i', {'class': 'btnTextDropDwn arial_12 bold'}).text
+        df['ticker'] = bs.find('meta', {'itemprop': 'tickerSymbol'})['content']
 
         return df
 

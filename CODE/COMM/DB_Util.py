@@ -85,11 +85,7 @@ class DB(object):
         self.cursor.execute(sql, sql_arg)
 
         data = self.cursor.fetchall()
-        df = pd.DataFrame(data)
-
-        # 저장된 데이터가 없는 경우
-        if df.empty == False and columns != None:
-            df.columns = columns
+        df = pd.DataFrame(data, columns=columns)
 
         return df
 
