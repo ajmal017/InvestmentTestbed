@@ -273,13 +273,15 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
                     continue
 
                 # 기존 저장된 이후 주가부터 금일까지로 기간 설정
-                check_sql = "SELECT MAX(date) as max_date FROM stock_price" \
-                            " WHERE pid='%s'" % (comp_info['pid'])
-                last_date = db.select_query(query=check_sql)
-                # last_date[0][0]가 None인 경우는 해당 종목에 데이터가 하나도 없기 때문에 2000/1/1 이후 존제하는 모든 데이터를 수신  
-                if last_date[0][0] != None:
-                    start_date = last_date[0][0].split('-')
-                    start_date = str(int(start_date[1])) + '/' + str(int(start_date[2])) + '/' + str(int(start_date[0]))
+                if do_price_list[2] == True:
+                    check_sql = "SELECT MAX(date) as max_date FROM stock_price" \
+                                " WHERE pid='%s'" % (comp_info['pid'])
+                    last_date = db.select_query(query=check_sql)
+                    # last_date[0][0]가 None인 경우는 해당 종목에 데이터가 하나도 없기 때문에 2000/1/1 이후 존제하는 모든 데이터를 수신
+                    if last_date[0][0] != None:
+                        start_date = last_date[0][0].split('-')
+                        start_date = str(int(start_date[1])) + '/' + str(int(start_date[2])) + '/' + str(int(start_date[0]))
+
                 # 금일까지 종가로 존제하는 모든 데이터를 수신
                 end_date = str(datetime.today().date()).split('-')
                 end_date = str(int(end_date[1])) + '/' + str(int(end_date[2])) + '/' + str(int(end_date[0]))
@@ -290,16 +292,23 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
                     header = {'name': comp_info['nm'],
                               'curr_id': comp_info['pid'],  # investing.com html에서 'key'로 사용
                               'sort_col': 'date',
-                              'action': 'historical_data'}
+                              'action': 'historical_data',
+                              'st_date': start_date,
+                              'end_date': end_date,
+                              'interval_sec': 'Daily',
+                              #'sort_ord': 'ASC',
+                              'sort_ord': 'DESC',
+                    }
                     ihd.setFormData(header)
 
                     # second set Variables
-                    ihd.updateFrequency('Daily')
-                    ihd.updateStartingEndingDate(start_date, end_date)
-                    ihd.setSortOreder('DESC')
+                    #ihd.updateFrequency('Daily')
+                    #ihd.updateStartingEndingDate(start_date, end_date)
+                    #ihd.setSortOreder('DESC')
                     ihd.downloadData()
                     #ihd.printData()
                     prices = ihd.observations
+
                 # 크롤링을 이용해서 데이터 수신.
                 else:
                     prices = obj.GetPriceData(comp_info['price_url'], set_calendar=do_price_list[2], start_date=start_date, end_date=end_date)
@@ -342,7 +351,7 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
                     except (TypeError, KeyError) as e:
                         print('에러정보 : ', e, file=sys.stderr)
 
-                print("%s: %s, %s, %s" % (idx_comp, comp_info['pid'], comp_info['nm'], price_idx))
+                print("%s: %s, %s, %s(%s/%s)" % (idx_comp, comp_info['pid'], comp_info['nm'], price_idx, prices['Date'].to_list()[-1], prices['Date'].to_list()[0]))
 
                 # 비영업일 종가 전일 종가로 카피
                 sql = "SELECT pid, date, close, open  FROM stock_price" \
@@ -407,7 +416,7 @@ if __name__ == '__main__':
     # do_earnings 0: 실행여부, 1: 루프 num, 2: 시작 index
     # do_dividends 0: 실행여부, 1: 루프 num, 2: 시작 index
     # do_price_list 0: 실행여부, 1: API 사용여부, 2: Calendar 사용여부, 3: 시작 index
-    CrawlingData(index_nm_list, do_profile=[True,0], do_financial=[False,0], do_earnings=[False,0,0], do_dividends=[False,0,0], do_price_list=[True,True,True,0], loop_sleep_term=1)
+    CrawlingData(index_nm_list, do_profile=[False,0], do_financial=[False,0], do_earnings=[False,0,0], do_dividends=[False,0,0], do_price_list=[True,True,True,0], loop_sleep_term=1)
     #CrawlingData(options, do_profile=False, do_financial=False, do_earnings=False, do_dividends=True, do_price_list=[False, False, False], loop_sleep_term=0)
     GenerateAdditionalData()
 
