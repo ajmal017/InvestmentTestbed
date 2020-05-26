@@ -351,7 +351,7 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
                     except (TypeError, KeyError) as e:
                         print('에러정보 : ', e, file=sys.stderr)
 
-                print("%s: %s, %s, %s(%s/%s)" % (idx_comp, comp_info['pid'], comp_info['nm'], price_idx, prices['Date'].to_list()[-1], prices['Date'].to_list()[0]))
+                print("%s: %s, %s (%s/%s => %s)" % (idx_comp, comp_info['pid'], comp_info['nm'], prices['Date'].to_list()[-1], prices['Date'].to_list()[0], price_idx))
 
                 # 비영업일 종가 전일 종가로 카피
                 sql = "SELECT pid, date, close, open  FROM stock_price" \
