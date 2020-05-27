@@ -268,113 +268,120 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
             start_date = '1/1/2000'
             for idx_comp, comp_info in comp_info_list.iterrows():
 
-                # 정상 처리된 종목까지는 패스
-                if idx_comp < do_price_list[3]:
-                    continue
+                if do_price_list[4] == True:
+                    # 정상 처리된 종목까지는 패스
+                    if idx_comp < do_price_list[3]:
+                        continue
 
-                # 기존 저장된 이후 주가부터 금일까지로 기간 설정
-                if do_price_list[2] == True:
-                    check_sql = "SELECT MAX(date) as max_date FROM stock_price" \
-                                " WHERE pid='%s'" % (comp_info['pid'])
-                    last_date = db.select_query(query=check_sql)
-                    # last_date[0][0]가 None인 경우는 해당 종목에 데이터가 하나도 없기 때문에 2000/1/1 이후 존제하는 모든 데이터를 수신
-                    if last_date[0][0] != None:
-                        start_date = last_date[0][0].split('-')
-                        start_date = str(int(start_date[1])) + '/' + str(int(start_date[2])) + '/' + str(int(start_date[0]))
+                    # 기존 저장된 이후 주가부터 금일까지로 기간 설정
+                    if do_price_list[2] == True:
+                        check_sql = "SELECT MAX(date) as max_date FROM stock_price" \
+                                    " WHERE pid='%s'" % (comp_info['pid'])
+                        last_date = db.select_query(query=check_sql)
+                        # last_date[0][0]가 None인 경우는 해당 종목에 데이터가 하나도 없기 때문에 2000/1/1 이후 존제하는 모든 데이터를 수신
+                        if last_date[0][0] != None:
+                            start_date = last_date[0][0].split('-')
+                            start_date = str(int(start_date[1])) + '/' + str(int(start_date[2])) + '/' + str(int(start_date[0]))
 
-                # 금일까지 종가로 존제하는 모든 데이터를 수신
-                end_date = str(datetime.today().date()).split('-')
-                end_date = str(int(end_date[1])) + '/' + str(int(end_date[2])) + '/' + str(int(end_date[0]))
+                    # 금일까지 종가로 존제하는 모든 데이터를 수신
+                    end_date = str(datetime.today().date()).split('-')
+                    end_date = str(int(end_date[1])) + '/' + str(int(end_date[2])) + '/' + str(int(end_date[0]))
 
-                # API를 이용해서 데이터 수신(수신되는 데이터가 완정하지 않음)
-                if do_price_list[1] == True:
-                    ihd = Investing.IndiceHistoricalData('https://www.investing.com/instruments/HistoricalDataAjax')
-                    header = {'name': comp_info['nm'],
-                              'curr_id': comp_info['pid'],  # investing.com html에서 'key'로 사용
-                              'sort_col': 'date',
-                              'action': 'historical_data',
-                              'st_date': start_date,
-                              'end_date': end_date,
-                              'interval_sec': 'Daily',
-                              #'sort_ord': 'ASC',
-                              'sort_ord': 'DESC',
-                    }
-                    ihd.setFormData(header)
+                    # API를 이용해서 데이터 수신(수신되는 데이터가 완정하지 않음)
+                    if do_price_list[1] == True:
+                        ihd = Investing.IndiceHistoricalData('https://www.investing.com/instruments/HistoricalDataAjax')
+                        header = {'name': comp_info['nm'],
+                                  'curr_id': comp_info['pid'],  # investing.com html에서 'key'로 사용
+                                  'sort_col': 'date',
+                                  'action': 'historical_data',
+                                  'st_date': start_date,
+                                  'end_date': end_date,
+                                  'interval_sec': 'Daily',
+                                  #'sort_ord': 'ASC',
+                                  'sort_ord': 'DESC',
+                        }
+                        ihd.setFormData(header)
 
-                    # second set Variables
-                    #ihd.updateFrequency('Daily')
-                    #ihd.updateStartingEndingDate(start_date, end_date)
-                    #ihd.setSortOreder('DESC')
-                    ihd.downloadData()
-                    #ihd.printData()
-                    prices = ihd.observations
+                        # second set Variables
+                        #ihd.updateFrequency('Daily')
+                        #ihd.updateStartingEndingDate(start_date, end_date)
+                        #ihd.setSortOreder('DESC')
+                        ihd.downloadData()
+                        #ihd.printData()
+                        prices = ihd.observations
 
-                # 크롤링을 이용해서 데이터 수신.
-                else:
-                    prices = obj.GetPriceData(comp_info['price_url'], set_calendar=do_price_list[2], start_date=start_date, end_date=end_date)
+                    # 크롤링을 이용해서 데이터 수신.
+                    else:
+                        prices = obj.GetPriceData(comp_info['price_url'], set_calendar=do_price_list[2], start_date=start_date, end_date=end_date)
 
-                for price_idx, price in prices.iterrows():
-                    try:
-                        pid = comp_info['pid']
+                    for price_idx, price in prices.iterrows():
+                        try:
+                            pid = comp_info['pid']
 
-                        if do_price_list[1] == True:
-                            
-                            # API를 통해 데이터 제공되지 않는 종목 패스
-                            if price['Date'] == 'No results found':
+                            if do_price_list[1] == True:
+
+                                # API를 통해 데이터 제공되지 않는 종목 패스
+                                if price['Date'] == 'No results found':
+                                    break
+
+                                p_date = price['Date'].replace(',', '').split()
+                                p_date = str(date(int(p_date[2]), Investing.calendar_map[p_date[0]], int(p_date[1])))
+
+                                value, unit = Investing.getRealValue(price['Vol.'])
+                                vol = int(value * unit) if value != 'NULL' or unit != 'NULL' else 'NULL'
+                            else:
+                                p_date = price['Date']
+                                vol = price['Vol.']
+
+                            close = price['Price']
+                            open = price['Open']
+                            high = price['High']
+                            low = price['Low']
+
+                            '''
+                            # API를 통해 얻은 데이터의 기간이 설정보다 많은 데이터를 가지고 오는 경우 과거 데이터는 패스
+                            if datetime.strptime(p_date, '%Y-%m-%d').date() <= datetime.strptime(start_date, '%m/%d/%Y').date():
                                 break
+                            '''
+                            sql = "INSERT INTO stock_price (pid, date, close, open, high, low, vol, create_time, update_time) " \
+                                  "VALUES ('%s', '%s', %s, %s, %s, %s, %s, now(), now()) ON DUPLICATE KEY UPDATE close = %s, open = %s, high = %s, low = %s, vol = %s, update_time = now()"
+                            sql_arg = (pid, p_date, close, open, high, low, vol, close, open, high, low, vol)
+                            if (db.execute_query(sql, sql_arg) == False):
+                                print("stock_price insert error(%s: %s, %s)" % (comp_info['pid'], comp_info['nm'], p_date))
 
-                            p_date = price['Date'].replace(',', '').split()
-                            p_date = str(date(int(p_date[2]), Investing.calendar_map[p_date[0]], int(p_date[1])))
+                        except (TypeError, KeyError) as e:
+                            print('에러정보 : ', e, file=sys.stderr)
 
-                            value, unit = Investing.getRealValue(price['Vol.'])
-                            vol = int(value * unit) if value != 'NULL' or unit != 'NULL' else 'NULL'
-                        else:
-                            p_date = price['Date']
-                            vol = price['Vol.']
+                    print("%s: %s, %s (%s/%s => %s)" % (idx_comp, comp_info['pid'], comp_info['nm'], prices['Date'].to_list()[-1], prices['Date'].to_list()[0], price_idx))
 
-                        close = price['Price']
-                        open = price['Open']
-                        high = price['High']
-                        low = price['Low']
+                if do_price_list[5] == True:
+                    # 비영업일 종가 전일 종가로 카피
+                    sql = "SELECT pid, date, close, open  FROM stock_price" \
+                          " WHERE pid='%s'" % (comp_info['pid'])
+                    columns = ['pid', 'date', 'close', 'open']
+                    #print(sql % columns)
 
-                        '''
-                        # API를 통해 얻은 데이터의 기간이 설정보다 많은 데이터를 가지고 오는 경우 과거 데이터는 패스
-                        if datetime.strptime(p_date, '%Y-%m-%d').date() <= datetime.strptime(start_date, '%m/%d/%Y').date():
-                            break
-                        '''
-                        sql = "INSERT INTO stock_price (pid, date, close, open, high, low, vol, create_time, update_time) " \
-                              "VALUES ('%s', '%s', %s, %s, %s, %s, %s, now(), now()) ON DUPLICATE KEY UPDATE close = %s, open = %s, high = %s, low = %s, vol = %s, update_time = now()"
-                        sql_arg = (pid, p_date, close, open, high, low, vol, close, open, high, low, vol)
-                        if (db.execute_query(sql, sql_arg) == False):
-                            print("stock_price insert error(%s: %s, %s)" % (comp_info['pid'], comp_info['nm'], p_date))
+                    p_data_list = db.select_query(query=sql, columns=columns)
+                    update_dates = ""
+                    for p_data_idx, p_data in p_data_list.iterrows():
+                        if p_data_idx > 0:
+                            term = (datetime.strptime(p_data['date'], '%Y-%m-%d').date() - datetime.strptime(prev_date, '%Y-%m-%d').date()).days
 
-                    except (TypeError, KeyError) as e:
-                        print('에러정보 : ', e, file=sys.stderr)
+                            if term > 1:
 
-                print("%s: %s, %s (%s/%s => %s)" % (idx_comp, comp_info['pid'], comp_info['nm'], prices['Date'].to_list()[-1], prices['Date'].to_list()[0], price_idx))
+                                for n in range(term-1):
+                                    nonbis_date = str(datetime.strptime(prev_date, '%Y-%m-%d').date() + relativedelta(days=n+1))
+                                    sql = "INSERT INTO stock_price (pid, date, close) " \
+                                          "VALUES ('%s', '%s', %s) ON DUPLICATE KEY UPDATE close = %s"
+                                    sql_arg = (comp_info['pid'], nonbis_date, prev_close, prev_close)
+                                    db.execute_query(sql, sql_arg)
 
-                # 비영업일 종가 전일 종가로 카피
-                sql = "SELECT pid, date, close, open  FROM stock_price" \
-                      " WHERE pid='%s'" % (comp_info['pid'])
-                columns = ['pid', 'date', 'close', 'open']
-                #print(sql % columns)
+                                    update_dates = update_dates + ', ' + nonbis_date
 
-                p_data_list = db.select_query(query=sql, columns=columns)
-                for p_data_idx, p_data in p_data_list.iterrows():
-                    if p_data_idx > 0:
-                        term = (datetime.strptime(p_data['date'], '%Y-%m-%d').date() - datetime.strptime(prev_date, '%Y-%m-%d').date()).days
+                        prev_date = p_data['date']
+                        prev_close = p_data['close']
 
-                        if term > 1:
-                            for n in range(term-1):
-                                nonbis_date = str(datetime.strptime(prev_date, '%Y-%m-%d').date() + relativedelta(days=n+1))
-                                sql = "INSERT INTO stock_price (pid, date, close, open) " \
-                                      "VALUES ('%s', '%s', %s, %s) ON DUPLICATE KEY UPDATE close = %s, open = %s"
-                                sql_arg = (comp_info['pid'], nonbis_date, prev_close, p_data['open'], prev_close, p_data['open'])
-                                #print(sql % (sql_arg))
-                                db.execute_query(sql, sql_arg)
-
-                    prev_date = p_data['date']
-                    prev_close = p_data['close']
+                    print(str(p_data_idx) + ':\t' + comp_info['pid'] + '\t' + update_dates)
 
                 time.sleep(loop_sleep_term)
 
@@ -415,8 +422,8 @@ if __name__ == '__main__':
     # do_financial 0: 실행여부, 1: 시작 index
     # do_earnings 0: 실행여부, 1: 루프 num, 2: 시작 index
     # do_dividends 0: 실행여부, 1: 루프 num, 2: 시작 index
-    # do_price_list 0: 실행여부, 1: API 사용여부, 2: Calendar 사용여부, 3: 시작 index
-    CrawlingData(index_nm_list, do_profile=[False,0], do_financial=[False,0], do_earnings=[False,0,0], do_dividends=[False,0,0], do_price_list=[True,True,True,0], loop_sleep_term=1)
+    # do_price_list 0: 실행여부, 1: API 사용여부, 2: Calendar 사용여부, 3: 시작 index, 4: Data 수신여부, 5: 비영업일 카피여부
+    CrawlingData(index_nm_list, do_profile=[False,0], do_financial=[False,0], do_earnings=[False,0,0], do_dividends=[False,0,0], do_price_list=[True,True,True,0,False,True], loop_sleep_term=1)
     #CrawlingData(options, do_profile=False, do_financial=False, do_earnings=False, do_dividends=True, do_price_list=[False, False, False], loop_sleep_term=0)
     GenerateAdditionalData()
 
