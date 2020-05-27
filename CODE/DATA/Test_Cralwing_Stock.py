@@ -381,7 +381,7 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
                         prev_date = p_data['date']
                         prev_close = p_data['close']
 
-                    print(str(p_data_idx) + ':\t' + comp_info['pid'] + '\t' + update_dates)
+                    print(str(idx_comp) + ':\t' + comp_info['pid'] + '\t' + update_dates)
 
                 time.sleep(loop_sleep_term)
 
