@@ -352,7 +352,7 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
                         except (TypeError, KeyError) as e:
                             print('에러정보 : ', e, file=sys.stderr)
 
-                    print("%s: %s, %s (%s/%s => %s)" % (idx_comp, comp_info['pid'], comp_info['nm'], prices['Date'].to_list()[-1], prices['Date'].to_list()[0], price_idx))
+                    print("%s: %s, %s (%s / %s => %s)" % (idx_comp, comp_info['pid'], comp_info['nm'], prices['Date'].to_list()[-1], prices['Date'].to_list()[0], price_idx))
 
                 if do_price_list[5] == True:
                     # 비영업일 종가 전일 종가로 카피
@@ -423,7 +423,7 @@ if __name__ == '__main__':
     # do_earnings 0: 실행여부, 1: 루프 num, 2: 시작 index
     # do_dividends 0: 실행여부, 1: 루프 num, 2: 시작 index
     # do_price_list 0: 실행여부, 1: API 사용여부, 2: Calendar 사용여부, 3: 시작 index, 4: Data 수신여부, 5: 비영업일 카피여부
-    CrawlingData(index_nm_list, do_profile=[False,0], do_financial=[False,0], do_earnings=[False,0,0], do_dividends=[False,0,0], do_price_list=[True,True,True,0,False,True], loop_sleep_term=1)
+    CrawlingData(index_nm_list, do_profile=[False,0], do_financial=[False,0], do_earnings=[False,0,0], do_dividends=[False,0,0], do_price_list=[True,True,True,0,True,True], loop_sleep_term=0.5)
     #CrawlingData(options, do_profile=False, do_financial=False, do_earnings=False, do_dividends=True, do_price_list=[False, False, False], loop_sleep_term=0)
     GenerateAdditionalData()
 
