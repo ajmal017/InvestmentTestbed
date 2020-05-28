@@ -56,40 +56,35 @@ pivoted_revenue_bold = raw_data.pivot(index='date', columns='pid', values='reven
 pivoted_revenue_fore = raw_data.pivot(index='date', columns='pid', values='revenue_fore')
 #print(pivoted_revenue_fore)
 
-is_new_pid = False
 count_new_data = 0
-arr_revenue_bold = [0.0]*4
+term_size = 4
+arr_revenue_bold = [0.0] * term_size
 for row in raw_data.iterrows():
     idx = row[0]
     data = row[1]
 
-    arr_revenue_bold[:3] = arr_revenue_bold[-3:]
+    arr_revenue_bold[:term_size-1] = arr_revenue_bold[-(term_size-1):]
 
     if idx > 0:
-        if data['pid'] == prev_pid:
-
-            if is_new_pid == True:
-                is_new_pid = False
-
-        else:
-            is_new_pid = True
+        if data['pid'] != prev_pid:
             count_new_data = 0
+            arr_revenue_bold = [0.0] * term_size
 
     else:
-        is_new_pid = True
         count_new_data = 0
+        arr_revenue_bold = [0.0] * term_size
 
-    arr_revenue_bold[-1] = float(data['revenue_bold'] if data['revenue_bold'] != None else 0)
+    arr_revenue_bold[-1] = float(data['revenue_bold'] if (data['revenue_bold'] != None and data['revenue_bold'] != 0) else sum(arr_revenue_bold[:term_size-1])/(term_size-1))
 
     count_new_data += 1
 
-    if count_new_data >= 4:
-        raw_data['acc_revenue_bold'][idx] = sum(arr_revenue_bold)/4
+    if count_new_data >= term_size:
+        raw_data['acc_revenue_bold'][idx] = sum(arr_revenue_bold) / term_size
 
     prev_pid = data['pid']
-    prev_revenue_bold = float(data['revenue_bold'] if data['revenue_bold'] != None else 0)
 
-File_Util.SaveExcelFiles(obj_dict=raw_data)
+print(raw_data)
+#File_Util.SaveExcelFiles(obj_dict=raw_data)
 
 
 db.disconnect()
