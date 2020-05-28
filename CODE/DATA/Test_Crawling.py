@@ -13,6 +13,8 @@ from datetime import date
 import pandas as pd
 import numpy as np
 import multiprocessing as mp
+from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 warnings.filterwarnings("ignore")
@@ -138,6 +140,35 @@ def CrawlHistoricalPrices(start_date, end_date):
                 print('에러정보 : ', e, file=sys.stderr)
                 #print(date_splits, pre_statistics_time)
         # ihd.saveDataCSV()
+
+        # 비영업일 종가 전일 종가로 카피
+        sql = "SELECT idx_cd, date, close, open  FROM index_price" \
+              " WHERE idx_cd='%s'" % (master[1]['cd'])
+        columns = ['idx_cd', 'date', 'close', 'open']
+        # print(sql % columns)
+
+        p_data_list = db.select_query(query=sql, columns=columns)
+        update_dates = ""
+        for p_data_idx, p_data in p_data_list.iterrows():
+            if p_data_idx > 0:
+                term = (datetime.strptime(p_data['date'], '%Y-%m-%d').date() - datetime.strptime(prev_date, '%Y-%m-%d').date()).days
+
+                if term > 1:
+
+                    for n in range(term - 1):
+                        nonbis_date = str(
+                            datetime.strptime(prev_date, '%Y-%m-%d').date() + relativedelta(days=n + 1))
+                        sql = "INSERT INTO index_price (idx_cd, date, close) " \
+                              "VALUES ('%s', '%s', %s) ON DUPLICATE KEY UPDATE close = %s"
+                        sql_arg = (master[1]['cd'], nonbis_date, prev_close, prev_close)
+                        db.execute_query(sql, sql_arg)
+
+                        update_dates = update_dates + ', ' + nonbis_date
+
+            prev_date = p_data['date']
+            prev_close = p_data['close']
+
+        print(master[1]['cd'] + '\t' + update_dates)
 
 if 0:
     datas = db.select_query("select a.nm_us, a.cd, b.release_date"
