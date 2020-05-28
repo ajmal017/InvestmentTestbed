@@ -23,6 +23,10 @@ def SaveExcelFiles(file='test.xlsx', obj_dict=None):
     return True
 
 
+def SaveCSVFiles(file='test.csv', obj_dict=None):
+    obj_dict.to_csv(file, sep=',', na_rep='NaN')
+
+
 def ReadCSVFiles(base_folder, ex_list):
     csv_files = os.listdir(base_folder)
     # print(csv_files)

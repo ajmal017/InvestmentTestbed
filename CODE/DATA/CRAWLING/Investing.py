@@ -55,7 +55,10 @@ def getRealValue(s):
     except (ValueError, TypeError) as e:
         print('에러정보 : ', e, file=sys.stderr)
 
-        return None, None
+        value = 0.0
+        unit = 1
+
+        return value, unit
 
 def removeAd(wd):
     all_iframes = wd.find_elements_by_tag_name("iframe")
