@@ -73,13 +73,26 @@ def CrawlEconomicEventValues(t_gap=0.2, loop_num=float('inf')):
 
 
 # 각 국가별 지수 및 원자재 근월물 가격 데이터 크롤링
-def CrawlHistoricalPrices(satrt_date, end_date):
+def CrawlHistoricalPrices(start_date, end_date):
 
     sql = sql="SELECT cd, nm_us, curr_id" \
               "  FROM index_master"
     master_list = db.select_query(query=sql, columns=['cd', 'nm_us', 'curr_id'])
 
     for master in master_list.iterrows():
+
+        check_sql = "SELECT MAX(date) as max_date FROM index_price" \
+                    " WHERE idx_cd='%s'" % (master[1]['cd'])
+        last_date = db.select_query(query=check_sql)
+        # last_date[0][0]가 None인 경우는 해당 종목에 데이터가 하나도 없기 때문에 2000/1/1 이후 존제하는 모든 데이터를 수신
+        if last_date[0][0] != None:
+            start_date = last_date[0][0].split('-')
+            start_date = str(int(start_date[1])) + '/' + str(int(start_date[2])) + '/' + str(int(start_date[0]))
+
+        # 금일까지 종가로 존제하는 모든 데이터를 수신
+        end_date = str(datetime.today().date()).split('-')
+        end_date = str(int(end_date[1])) + '/' + str(int(end_date[2])) + '/' + str(int(end_date[0]))
+
         # first set Headers and FormData
         ihd = Investing.IndiceHistoricalData('https://www.investing.com/instruments/HistoricalDataAjax')
 
@@ -92,7 +105,7 @@ def CrawlHistoricalPrices(satrt_date, end_date):
 
         # second set Variables
         ihd.updateFrequency('Daily')
-        ihd.updateStartingEndingDate(satrt_date, end_date)
+        ihd.updateStartingEndingDate(start_date, end_date)
         ihd.setSortOreder('ASC')
         ihd.downloadData()
         ihd.printData()
@@ -111,12 +124,12 @@ def CrawlHistoricalPrices(satrt_date, end_date):
                 high = result[1]['High']
                 low = result[1]['Low']
 
-                value, unit = Investing.getRealValue(result[1]['Vol.'])
-                vol = int(value * unit) if value != 'NULL' or unit != 'NULL' else 'NULL'
+                #value, unit = Investing.getRealValue(result[1]['Vol.'])
+                #vol = int(value * unit) if value != 'NULL' or unit != 'NULL' else 'NULL'
 
-                sql = "INSERT INTO index_price (idx_cd, date, close, open, high, low, vol, create_time, update_time) " \
-                      "VALUES ('%s', '%s', %s, %s, %s, %s, %s, now(), now()) ON DUPLICATE KEY UPDATE close = %s, open = %s, high = %s, low = %s, vol = %s, update_time = now()"
-                sql_arg = (cd, date_str, close, open, high, low, vol, close, open, high, low, vol)
+                sql = "INSERT INTO index_price (idx_cd, date, close, open, high, low, create_time, update_time) " \
+                      "VALUES ('%s', '%s', %s, %s, %s, %s, now(), now()) ON DUPLICATE KEY UPDATE close = %s, open = %s, high = %s, low = %s, update_time = now()"
+                sql_arg = (cd, date_str, close, open, high, low, close, open, high, low)
                 # print(sql % sql_arg)
 
                 if (db.execute_query(sql, sql_arg) == False):
@@ -174,12 +187,12 @@ if __name__ == '__main__':
     db = DB_Util.DB()
     db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", password="ryumaria")
 
-    if 0:
-        satrt_date = '1/1/2000'
-        end_date = '1/3/2020'
-        CrawlHistoricalPrices(satrt_date, end_date)
-
     if 1:
+        start_date = '1/1/2000'
+        end_date = '27/5/2020'
+        CrawlHistoricalPrices(start_date, end_date)
+
+    if 0:
         t_gap = 0.1
         loop_num = 3
         CrawlEconomicEventValues(t_gap)
