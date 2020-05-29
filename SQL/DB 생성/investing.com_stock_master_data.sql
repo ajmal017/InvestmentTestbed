@@ -37,7 +37,6 @@ CREATE TABLE IF NOT EXISTS `stock_master` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- 테이블 데이터 investing.com.stock_master:~1,927 rows (대략적) 내보내기
-DELETE FROM `stock_master`;
 /*!40000 ALTER TABLE `stock_master` DISABLE KEYS */;
 INSERT INTO `stock_master` (`pid`, `country`, `nm`, `ticker`, `industry`, `sector`, `market`, `url`, `profile_url`, `financial_url`, `earnings_url`, `dividends_url`, `price_url`, `create_time`, `update_time`) VALUES
 	('100160', 'US', 'Alphabet Inc Class C', 'GOOG', 'Computer Services', 'Technology', 'NASDAQ', 'https://www.investing.com/equities/google-inc-c', 'https://www.investing.com/equities/google-inc-c-company-profile', 'https://www.investing.com/equities/google-inc-c-financial-summary', 'https://www.investing.com/equities/google-inc-c-earnings', 'https://www.investing.com/equities/google-inc-c-dividends', 'https://www.investing.com/equities/google-inc-c-historical-data', '2020-03-03 15:43:23', '2020-05-25 15:52:08'),

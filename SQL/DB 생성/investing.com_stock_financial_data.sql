@@ -38,8 +38,7 @@ CREATE TABLE IF NOT EXISTS `stock_financial` (
   PRIMARY KEY (`pid`,`date`,`term_type`,`period`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
--- 테이블 데이터 investing.com.stock_financial:~17,029 rows (대략적) 내보내기
-DELETE FROM `stock_financial`;
+-- 테이블 데이터 investing.com.stock_financial:~16,072 rows (대략적) 내보내기
 /*!40000 ALTER TABLE `stock_financial` DISABLE KEYS */;
 INSERT INTO `stock_financial` (`pid`, `date`, `term_type`, `period`, `total_revenue`, `gross_profit`, `operating_income`, `net_income`, `total_assets`, `total_liabilities`, `total_equity`, `cash_from_operating_activities`, `cash_from_investing_activities`, `cash_from_financing_activities`, `net_change_in_cash`, `create_time`, `update_time`) VALUES
 	('100160', '2016-12-31', 'a', 12, 90272.0000, 55134.0000, 23716.0000, 19478.0000, 167497.0000, 28461.0000, 139036.0000, 36036.0000, -31165.0000, -8332.0000, -3631.0000, NULL, '2020-05-22 13:29:17'),
