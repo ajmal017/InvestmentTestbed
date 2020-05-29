@@ -20,9 +20,9 @@ warnings.filterwarnings("ignore")
 from COMM import DB_Util
 from CRAWLING import Investing
 
-def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_dividends, do_price_list, loop_sleep_term):
+def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_dividends, do_price_list, loop_sleep_term, do_background):
     obj = Investing.InvestingStockInfo(db)
-    obj.Start(do_background=False)
+    obj.Start(do_background=do_background)
     #time.sleep(15)
 
     # 주식의 기본 정보 크롤링
@@ -419,11 +419,21 @@ if __name__ == '__main__':
 
     #index_nm_list = ['NASDAQ Composite', 'KOSPI 200', 'KOSDAQ 150', 'S&P 500', 'Nasdaq 100', ]
     index_nm_list = ['NASDAQ Composite', 'United States all stocks', 'S&P 500', 'Nasdaq 100', ]
+
+    #do_prifile 0: 실행여부(비실행 시 data수신 로직 실행, 1: 시작 index
+    do_profile = [False, 0]
     # do_financial 0: 실행여부, 1: 시작 index
+    do_financial = [False, 0]
     # do_earnings 0: 실행여부, 1: 루프 num, 2: 시작 index
+    do_earnings = [True, 10, 0]
     # do_dividends 0: 실행여부, 1: 루프 num, 2: 시작 index
+    do_dividends = [False, 10, 0]
     # do_price_list 0: 실행여부, 1: API 사용여부, 2: Calendar 사용여부, 3: 시작 index, 4: Data 수신여부, 5: 비영업일 카피여부
-    CrawlingData(index_nm_list, do_profile=[False,0], do_financial=[False,0], do_earnings=[False,0,0], do_dividends=[False,0,0], do_price_list=[True,True,True,0,True,True], loop_sleep_term=0.5)
+    do_price_list = [False, True, True, 0, True, True]
+
+    do_background = True
+    loop_sleep_term = 0.5
+    CrawlingData(index_nm_list, do_profile=do_profile, do_financial=do_financial, do_earnings=do_earnings, do_dividends=do_dividends, do_price_list=do_price_list, loop_sleep_term=loop_sleep_term, do_background=do_background)
     #CrawlingData(options, do_profile=False, do_financial=False, do_earnings=False, do_dividends=True, do_price_list=[False, False, False], loop_sleep_term=0)
     GenerateAdditionalData()
 
