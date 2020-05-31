@@ -75,7 +75,7 @@ def CrawlEconomicEventValues(t_gap=0.2, loop_num=float('inf')):
 
 
 # 각 국가별 지수 및 원자재 근월물 가격 데이터 크롤링
-def CrawlHistoricalPrices(start_date, end_date):
+def CrawlHistoricalPrices(start_date):
 
     sql = sql="SELECT cd, nm_us, curr_id" \
               "  FROM index_master"
@@ -220,8 +220,7 @@ if __name__ == '__main__':
 
     if 1:
         start_date = '1/1/2000'
-        end_date = '27/5/2020'
-        CrawlHistoricalPrices(start_date, end_date)
+        CrawlHistoricalPrices(start_date)
 
     if 0:
         t_gap = 0.1
