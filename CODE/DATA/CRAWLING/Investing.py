@@ -502,7 +502,7 @@ class InvestingStockInfo():
 
     def GetEarningsData(self, url, loop_num=0):
         self.wd.get('%s' % (url))
-        time.sleep(0.5)
+        time.sleep(0.1)
 
         removeAd(self.wd)
 
@@ -516,7 +516,7 @@ class InvestingStockInfo():
 
                 result = self.wd.find_element_by_xpath('//*[@id="showMoreEarningsHistory"]')
                 result.click()
-                time.sleep(0.5)
+                time.sleep(0.1)
                 loop_cnt += 1
             except (common.exceptions.ElementClickInterceptedException):
                 pass
@@ -563,7 +563,7 @@ class InvestingStockInfo():
 
     def GetDividendsData(self, url, loop_num=0):
         self.wd.get('%s' % (url))
-        time.sleep(0.5)
+        time.sleep(0.1)
 
         removeAd(self.wd)
 
@@ -577,7 +577,7 @@ class InvestingStockInfo():
 
                 result = self.wd.find_element_by_xpath('//*[@id="showMoreDividendsHistory"]')
                 result.click()
-                time.sleep(0.5)
+                time.sleep(0.1)
                 loop_cnt += 1
             except (common.exceptions.ElementClickInterceptedException):
                 pass
