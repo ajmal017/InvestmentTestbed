@@ -425,9 +425,9 @@ if __name__ == '__main__':
     # do_financial 0: 실행여부, 1: 시작 index
     do_financial = [False, 0]
     # do_earnings 0: 실행여부, 1: 루프 num, 2: 시작 index
-    do_earnings = [True, 1, 0]
+    do_earnings = [True, 2, 0]
     # do_dividends 0: 실행여부, 1: 루프 num, 2: 시작 index
-    do_dividends = [True, 1, 0]
+    do_dividends = [True, 2, 0]
     # do_price_list 0: 실행여부, 1: API 사용여부, 2: Calendar 사용여부, 3: 시작 index, 4: Data 수신여부, 5: 비영업일 카피여부
     do_price_list = [False, True, True, 0, True, True]
 
