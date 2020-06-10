@@ -34,7 +34,7 @@ MULTI_PROCESS = False
 # 등록된 Economic Event 리스트의 데이터를 크롤링
 # Economic Event 리스트는 investing.com의 Economic Calendar에서 수집 후 엑셀 작업으로 DB에 insert
 # 미국, 중국, 한국의 모든 이벤트
-def CrawlEconomicEventValues(t_gap=0.2, loop_num=float('inf')):
+def CrawlEconomicEventValues(t_gap=0.1, loop_num=float('inf'), do_background=False):
     # Economic Event 리스트 select
     datas = db.select_query("SELECT cd, nm_us, link, ctry, period, type"
                             "  FROM economic_events"
@@ -54,7 +54,7 @@ def CrawlEconomicEventValues(t_gap=0.2, loop_num=float('inf')):
             print(i*unit_size,min((i+1)*unit_size,len(datas)))
 
             # chromedriver를 이용하여 session 연결
-            session = Investing.InvestingEconomicEventCalendar(sub_datas, db, i+1)
+            session = Investing.InvestingEconomicEventCalendar(sub_datas, db, do_background, i+1)
             p = mp.Process(target=Investing.CrawlingStart, args=(session, t_gap, loop_num))
             jobs.append(p)
             p.start()
@@ -70,7 +70,7 @@ def CrawlEconomicEventValues(t_gap=0.2, loop_num=float('inf')):
 
             count_loop += 1
     else:
-        session = Investing.InvestingEconomicEventCalendar(datas, db)
+        session = Investing.InvestingEconomicEventCalendar(datas, db, do_background)
         session.Start(t_gap=t_gap, loop_num=loop_num)
 
 
@@ -218,14 +218,15 @@ if __name__ == '__main__':
     db = DB_Util.DB()
     db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", password="ryumaria")
 
-    if 1:
+    if 0:
         start_date = '1/1/2000'
         CrawlHistoricalPrices(start_date)
 
-    if 0:
+    if 1:
         t_gap = 0.1
-        loop_num = 3
-        CrawlEconomicEventValues(t_gap)
+        loop_num = 0
+        do_background = False
+        CrawlEconomicEventValues(t_gap, do_background=do_background)
 
     # 당일 Economic Event 리스트 크롤링
     if 0:

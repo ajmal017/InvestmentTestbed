@@ -102,17 +102,41 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
 
     # 사전에 크롤링된 종목 정보를 DB에서 가져옴
     else:
-        sql = "SELECT pid, country, nm, industry, sector, url, profile_url, financial_url, earnings_url, dividends_url, price_url" \
-              "  FROM stock_master" \
-              " WHERE market in ('NASDAQ', 'NYSE')"
-        columns = ['pid', 'country', 'nm', 'industry', 'sector', 'url', 'profile_url', 'financial_url', 'earnings_url', 'dividends_url', 'price_url']
-        comp_info_list = db.select_query(query=sql, columns=columns)
+        sql = "SELECT a.pid AS pid" \
+              "     , a.country AS country" \
+              "     , a.nm AS nm" \
+              "     , a.industry AS industry" \
+              "     , a.sector AS sector" \
+              "     , a.url AS url" \
+              "     , a.profile_url AS profile_url" \
+              "     , a.financial_url AS financial_url" \
+              "     , a.earnings_url AS earnings_url" \
+              "     , a.dividends_url AS dividends_url" \
+              "     , a.price_url AS price_url" \
+              "     , b.financial_cnt AS financial_cnt" \
+              "     , c.earnings_cnt AS earnings_cnt" \
+              "     , d.dividends_cnt AS dividends_cnt" \
+              "     , e.price_cnt AS price_cnt" \
+              "  FROM stock_master a" \
+              "  LEFT JOIN (SELECT pid AS pid,COUNT(*) AS financial_cnt FROM stock_financial GROUP BY pid) b" \
+              "    ON a.pid = b.pid" \
+              "  LEFT JOIN (SELECT pid AS pid,COUNT(*) AS earnings_cnt FROM stock_earnings GROUP BY pid) c" \
+              "    ON a.pid = c.pid" \
+              "  LEFT JOIN (SELECT pid AS pid,COUNT(*) AS dividends_cnt FROM stock_dividends GROUP BY pid) d" \
+              "    ON a.pid = d.pid" \
+              " LEFT JOIN (SELECT pid AS pid,COUNT(*) AS price_cnt FROM stock_price GROUP BY pid) e" \
+              "    ON a.pid = e.pid" \
+              " WHERE a.market IN ('NASDAQ', 'NYSE')" \
+              " GROUP BY a.pid, a.country, a.nm, a.industry, a.sector, a.url, a.profile_url, a.financial_url, a.earnings_url, a.dividends_url, a.price_url"
+        columns = ['pid', 'country', 'nm', 'industry', 'sector', 'url', 'profile_url', 'financial_url', 'earnings_url', 'dividends_url', 'price_url', 'financial_cnt', 'earnings_cnt', 'dividends_cnt', 'price_cnt']
+        comp_info_list = db.select_query(query=sql, columns=columns).fillna(0)
 
         # financial 정보 크롤링(anuual: 4년, qualterly: 4분기)
         if do_financial[0] == True:
 
             start_time = time.time()
 
+            comp_info_list = comp_info_list.sort_values('financial_cnt')
             for idx_comp, comp_info in comp_info_list.iterrows():
 
                 # 정상 처리된 종목까지는 패스
@@ -176,6 +200,7 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
 
             start_time = time.time()
 
+            comp_info_list = comp_info_list.sort_values('earnings_cnt')
             for idx_comp, comp_info in comp_info_list.iterrows():
 
                 # 정상 처리된 종목까지는 패스
@@ -222,6 +247,7 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
 
             start_time = time.time()
 
+            comp_info_list = comp_info_list.sort_values('dividends_cnt')
             for idx_comp, comp_info in comp_info_list.iterrows():
 
                 # 정상 처리된 종목까지는 패스
@@ -265,6 +291,7 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
             start_time = time.time()
             #obj.Finish()
 
+            comp_info_list = comp_info_list.sort_values('price_cnt')
             start_date = '1/1/2000'
             for idx_comp, comp_info in comp_info_list.iterrows():
 
@@ -432,7 +459,7 @@ if __name__ == '__main__':
     do_price_list = [False, True, True, 0, True, True]
 
     do_background = True
-    loop_sleep_term = 0.5
+    loop_sleep_term = 0.3
     CrawlingData(index_nm_list, do_profile=do_profile, do_financial=do_financial, do_earnings=do_earnings, do_dividends=do_dividends, do_price_list=do_price_list, loop_sleep_term=loop_sleep_term, do_background=do_background)
     #CrawlingData(options, do_profile=False, do_financial=False, do_earnings=False, do_dividends=True, do_price_list=[False, False, False], loop_sleep_term=0)
     GenerateAdditionalData()

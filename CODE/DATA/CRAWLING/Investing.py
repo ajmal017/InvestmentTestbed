@@ -502,7 +502,7 @@ class InvestingStockInfo():
 
     def GetEarningsData(self, url, loop_num=0):
         self.wd.get('%s' % (url))
-        time.sleep(0.1)
+        time.sleep(1)
 
         removeAd(self.wd)
 
@@ -516,8 +516,22 @@ class InvestingStockInfo():
 
                 result = self.wd.find_element_by_xpath('//*[@id="showMoreEarningsHistory"]')
                 result.click()
-                time.sleep(0.1)
-                loop_cnt += 1
+                time.sleep(1)
+
+                # body의 contents 업데이트 없이 loop_cnt만 올라가는 것을 막기 위함
+                if loop_cnt > 0:
+                    rows = self.readEarningTable()
+
+                    if len(rows) > prev_conts_cnt:
+                        loop_cnt += 1
+                        prev_conts_cnt = len(rows)
+
+                else:
+                    loop_cnt += 1
+                    prev_conts_cnt = 0
+
+
+
             except (common.exceptions.ElementClickInterceptedException):
                 pass
             except (common.exceptions.NoSuchElementException, Exception):
@@ -526,7 +540,6 @@ class InvestingStockInfo():
                 rows = self.readEarningTable()
                 for row in rows:
                     release_date = row['event_timestamp']
-
                     tmp_tbl = row.findAll('td')
                     period_end = tmp_tbl[1].text
                     eps_bold = getRealValue(tmp_tbl[2].text)
@@ -563,7 +576,7 @@ class InvestingStockInfo():
 
     def GetDividendsData(self, url, loop_num=0):
         self.wd.get('%s' % (url))
-        time.sleep(0.1)
+        time.sleep(1)
 
         removeAd(self.wd)
 
@@ -577,8 +590,20 @@ class InvestingStockInfo():
 
                 result = self.wd.find_element_by_xpath('//*[@id="showMoreDividendsHistory"]')
                 result.click()
-                time.sleep(0.1)
-                loop_cnt += 1
+                time.sleep(1)
+
+                # body의 contents 업데이트 없이 loop_cnt만 올라가는 것을 막기 위함
+                if loop_cnt > 0:
+                    rows = self.readDividendTable()
+
+                    if len(rows) > prev_conts_cnt:
+                        loop_cnt += 1
+                        prev_conts_cnt = len(rows)
+
+                else:
+                    loop_cnt += 1
+                    prev_conts_cnt = 0
+
             except (common.exceptions.ElementClickInterceptedException):
                 pass
             except (common.exceptions.NoSuchElementException, Exception):
@@ -688,11 +713,11 @@ class InvestingStockInfo():
 
 
 class InvestingEconomicEventCalendar():
-    def __init__(self, econmic_event_list, db, process_idx=None):
+    def __init__(self, econmic_event_list, db, do_background=False, process_idx=None):
         self.economic_event_list = econmic_event_list
         self.db = db
         self.options = webdriver.ChromeOptions()
-        if 0:
+        if do_background == True:
             self.options.add_argument('headless')
             #self.options.add_argument('window-size=1920x1080')
             #self.options.add_argument("disable-gpu")
@@ -713,7 +738,7 @@ class InvestingEconomicEventCalendar():
 
         removeAd(self.wd)
 
-    def Start(self, t_gap=0.2, loop_num=float('inf')):
+    def Start(self, t_gap=0.1, loop_num=float('inf')):
         startTime = timeit.default_timer()
 
         for data in self.economic_event_list.iterrows():
@@ -854,6 +879,7 @@ class InvestingEconomicEventCalendar():
                     prev_conts_cnt = 0
 
             except:
+                print(sys.exc_info()[0])
                 # print('error: %s' % str(page))
 
                 html = self.wd.page_source
