@@ -504,7 +504,7 @@ class InvestingStockInfo():
         self.wd.get('%s' % (url))
         time.sleep(1)
 
-        removeAd(self.wd)
+        #removeAd(self.wd)
 
         results = []
         loop_cnt = 0
@@ -525,18 +525,20 @@ class InvestingStockInfo():
                     if len(rows) > prev_conts_cnt:
                         loop_cnt += 1
                         prev_conts_cnt = len(rows)
-
                 else:
                     loop_cnt += 1
-                    prev_conts_cnt = 0
+                    prev_conts_cnt = self.readEarningTable()
 
-
+                iframe_close = self.wd.find_element_by_xpath('// *[ @ id = "flow_close_btn_iframe"]')
+                iframe_close.click()
 
             except (common.exceptions.ElementClickInterceptedException):
+                #iframe_close = self.wd.find_element_by_xpath('//*[@id="lightBoxCloseBtn"]')
+                #iframe_close.click()
+                pass
+            except (TypeError):
                 pass
             except (common.exceptions.NoSuchElementException, Exception):
-                #time.sleep(0.1)
-
                 rows = self.readEarningTable()
                 for row in rows:
                     release_date = row['event_timestamp']
@@ -552,6 +554,9 @@ class InvestingStockInfo():
                                        , 'revenue_bold': revenue_bold[0]*revenue_bold[1], 'revenue_fore': revenue_fore[0]*revenue_fore[1]})
 
                 return pd.DataFrame(results)
+
+            else:
+                print(sys.exc_info()[0])
 
     def readDividendTable(self):
         cnt = 0
@@ -578,7 +583,7 @@ class InvestingStockInfo():
         self.wd.get('%s' % (url))
         time.sleep(1)
 
-        removeAd(self.wd)
+        #removeAd(self.wd)
 
         results = []
         loop_cnt = 0
@@ -599,12 +604,18 @@ class InvestingStockInfo():
                     if len(rows) > prev_conts_cnt:
                         loop_cnt += 1
                         prev_conts_cnt = len(rows)
-
                 else:
                     loop_cnt += 1
-                    prev_conts_cnt = 0
+                    prev_conts_cnt = self.readDividendTable()
+
+                iframe_close = self.wd.find_element_by_xpath('// *[ @ id = "flow_close_btn_iframe"]')
+                iframe_close.click()
 
             except (common.exceptions.ElementClickInterceptedException):
+                #iframe_close = self.wd.find_element_by_xpath('//*[@id="lightBoxCloseBtn"]')
+                #iframe_close.click()
+                pass
+            except (TypeError):
                 pass
             except (common.exceptions.NoSuchElementException, Exception):
                 try:
@@ -626,6 +637,9 @@ class InvestingStockInfo():
                     print('No dividends Data.')
 
                 return pd.DataFrame(results)
+
+            else:
+                print(sys.exc_info()[0])
 
     def setPeriod(self, start_date, end_date):
         period_done = False
