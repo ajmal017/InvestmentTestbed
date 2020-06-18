@@ -76,6 +76,14 @@ def removeAd(wd):
         pass
         #print('No frames found')
 
+def close_iframe(wd):
+    try:
+        iframe_close = wd.find_element_by_xpath('// *[ @ id = "flow_close_btn_iframe"]')
+        iframe_close.click()
+
+    except:
+        pass
+
 
 class Good():
     def __init__(self):
@@ -515,6 +523,7 @@ class InvestingStockInfo():
                     raise Exception('loop_cnt: %s' % (loop_cnt))
 
                 result = self.wd.find_element_by_xpath('//*[@id="showMoreEarningsHistory"]')
+                close_iframe(wd=self.wd)
                 result.click()
                 time.sleep(1)
 
@@ -529,12 +538,10 @@ class InvestingStockInfo():
                     loop_cnt += 1
                     prev_conts_cnt = self.readEarningTable()
 
-                iframe_close = self.wd.find_element_by_xpath('// *[ @ id = "flow_close_btn_iframe"]')
-                iframe_close.click()
+                #close_iframe(wd=self.wd)
 
             except (common.exceptions.ElementClickInterceptedException):
-                #iframe_close = self.wd.find_element_by_xpath('//*[@id="lightBoxCloseBtn"]')
-                #iframe_close.click()
+                #close_iframe(wd=self.wd, type="lightBoxCloseBtn")
                 pass
             except (TypeError):
                 pass
@@ -594,6 +601,7 @@ class InvestingStockInfo():
                     raise Exception('loop_done: %s' % (loop_cnt))
 
                 result = self.wd.find_element_by_xpath('//*[@id="showMoreDividendsHistory"]')
+                close_iframe(wd=self.wd)
                 result.click()
                 time.sleep(1)
 
@@ -608,12 +616,10 @@ class InvestingStockInfo():
                     loop_cnt += 1
                     prev_conts_cnt = self.readDividendTable()
 
-                iframe_close = self.wd.find_element_by_xpath('// *[ @ id = "flow_close_btn_iframe"]')
-                iframe_close.click()
+                #close_iframe(wd=self.wd)
 
             except (common.exceptions.ElementClickInterceptedException):
-                #iframe_close = self.wd.find_element_by_xpath('//*[@id="lightBoxCloseBtn"]')
-                #iframe_close.click()
+                #close_iframe(wd=self.wd, type="lightBoxCloseBtn")
                 pass
             except (TypeError):
                 pass
