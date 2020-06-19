@@ -563,7 +563,8 @@ class InvestingStockInfo():
                 return pd.DataFrame(results)
 
             else:
-                print(sys.exc_info()[0])
+                if sys.exc_info()[0] != None:
+                    print(sys.exc_info()[0])
 
     def readDividendTable(self):
         cnt = 0
@@ -645,7 +646,8 @@ class InvestingStockInfo():
                 return pd.DataFrame(results)
 
             else:
-                print(sys.exc_info()[0])
+                if sys.exc_info()[0] != None:
+                    print(sys.exc_info()[0])
 
     def setPeriod(self, start_date, end_date):
         period_done = False
