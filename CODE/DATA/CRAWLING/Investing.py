@@ -414,6 +414,10 @@ class InvestingStockInfo():
                     self.clickPeriodTypeInFinancialSummary(type)
                     #table_done = True
 
+                    # 에러난 경우로 판단하고 패스
+                    if cnt % 100 == 0:
+                        return []
+
         time.sleep(0.1)
         return tables
 
