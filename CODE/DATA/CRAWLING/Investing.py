@@ -395,7 +395,7 @@ class InvestingStockInfo():
 
             #time.sleep(0.1)
 
-    def readFinancialSummaryTables(self, type):
+    def readFinancialSummaryTables(self, type, select_term_type=True):
         cnt = 0
         table_done = False
         while table_done == False:
@@ -409,9 +409,10 @@ class InvestingStockInfo():
                 table_done = False
 
             if cnt % 10 == 0:
-                print('##### clickPeriodTypeInFinancialSummary again #####')
-                self.clickPeriodTypeInFinancialSummary(type)
-                #table_done = True
+                if select_term_type == True:
+                    print('##### clickPeriodTypeInFinancialSummary again #####')
+                    self.clickPeriodTypeInFinancialSummary(type)
+                    #table_done = True
 
         time.sleep(0.1)
         return tables
@@ -430,7 +431,7 @@ class InvestingStockInfo():
         # 처음 열렸을 Financial 페이지 오픈 시 term type이 quaterly로 시작 되어 해당 버튼 클릭 필요 없음
         if select_term_type == True:
             self.clickPeriodTypeInFinancialSummary(type)
-        tables = self.readFinancialSummaryTables(type)
+        tables = self.readFinancialSummaryTables(type, select_term_type)
 
         for table in tables:
             header = table.find('thead').findAll('tr')
