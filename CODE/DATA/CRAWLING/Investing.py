@@ -818,8 +818,7 @@ class InvestingEconomicEventCalendar():
                     date_str = str(date(int(date_splits[2]), calendar_map[date_splits[0]], int(date_splits[1])))
 
                     # 통계시점에 대한 정보가 없는 경우 주기가 monthly인 경우 처리
-                    statistics_time = 'NULL' if len(date_splits) <= 3 or date_splits[3] not in calendar_map.keys() else \
-                        calendar_map[date_splits[3]]
+                    statistics_time = 'NULL' if len(date_splits) <= 3 or date_splits[3] not in calendar_map.keys() else calendar_map[date_splits[3]]
                     if period == 'M':
                         # 첫 데이터인 경우 이전달의 값을 역으로 추정
                         if pre_statistics_time == 0:
@@ -849,9 +848,7 @@ class InvestingEconomicEventCalendar():
                     sql = "INSERT INTO economic_events_schedule (event_cd, release_date, release_time, statistics_time, bold_value, fore_value, pre_release_yn, create_time, update_time) " \
                           "VALUES (%s, '%s', '%s', %s, %s, %s, %s, now(), now()) " \
                           "ON DUPLICATE KEY UPDATE release_time = '%s', statistics_time = %s, bold_value = %s, fore_value = %s, pre_release_yn = %s, update_time = now()"
-                    sql_arg = (
-                        cd, date_str, time, statistics_time, bold_flt, fore_flt, pre_release_yn, time, statistics_time,
-                        bold_flt, fore_flt, pre_release_yn)
+                    sql_arg = (cd, date_str, time, statistics_time, bold_flt, fore_flt, pre_release_yn, time, statistics_time, bold_flt, fore_flt, pre_release_yn)
 
                     if (self.db.execute_query(sql, sql_arg) == False):
                         # print(sql % sql_arg) # insert 에러 메세지를 보여준다.
@@ -879,8 +876,8 @@ class InvestingEconomicEventCalendar():
             try:
                 # 정해진 횟수만 크롤링
                 if loop_cnt >= loop_num:
-                    print(url + '\t' + str(loop_cnt) + '/' + str(loop_num))
-                    raise Exception('loop_cnt: ' % loop_cnt)
+                    #print(url + '\t' + str(loop_cnt) + '/' + str(loop_num))
+                    raise Exception('loop_cnt: %s' % loop_cnt)
 
                 script = 'void(0)'  # 사용하는 페이지를 이동시키는 js 코드
                 # self.wd.execute_script(script)  # js 실행
@@ -906,7 +903,7 @@ class InvestingEconomicEventCalendar():
                     prev_conts_cnt = 0
 
             except:
-                print(sys.exc_info()[0])
+                #print(sys.exc_info()[0])
                 # print('error: %s' % str(page))
 
                 html = self.wd.page_source
