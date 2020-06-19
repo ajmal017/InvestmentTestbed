@@ -136,7 +136,7 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
 
             start_time = time.time()
 
-            comp_info_list = comp_info_list.sort_values('financial_cnt')
+            #comp_info_list = comp_info_list.sort_values('financial_cnt')
             for idx_comp, comp_info in comp_info_list.iterrows():
 
                 # 정상 처리된 종목까지는 패스
@@ -200,7 +200,7 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
 
             start_time = time.time()
 
-            comp_info_list = comp_info_list.sort_values('earnings_cnt')
+            #comp_info_list = comp_info_list.sort_values('earnings_cnt')
             for idx_comp, comp_info in comp_info_list.iterrows():
 
                 # 정상 처리된 종목까지는 패스
@@ -247,7 +247,7 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
 
             start_time = time.time()
 
-            comp_info_list = comp_info_list.sort_values('dividends_cnt')
+            #comp_info_list = comp_info_list.sort_values('dividends_cnt')
             for idx_comp, comp_info in comp_info_list.iterrows():
 
                 # 정상 처리된 종목까지는 패스
@@ -291,7 +291,7 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
             start_time = time.time()
             #obj.Finish()
 
-            comp_info_list = comp_info_list.sort_values('price_cnt')
+            #comp_info_list = comp_info_list.sort_values('price_cnt')
             start_date = '1/1/2000'
             for idx_comp, comp_info in comp_info_list.iterrows():
 
@@ -333,7 +333,14 @@ def CrawlingData(index_nm_list, do_profile, do_financial, do_earnings, do_divide
                         #ihd.updateFrequency('Daily')
                         #ihd.updateStartingEndingDate(start_date, end_date)
                         #ihd.setSortOreder('DESC')
-                        ihd.downloadData()
+                        downloading = True
+                        while downloading:
+                            try:
+                                ihd.downloadData()
+                                downloading = False
+                            except:
+                                print("Price Download Fail!!!")
+
                         #ihd.printData()
                         prices = ihd.observations
 
@@ -452,14 +459,14 @@ if __name__ == '__main__':
     # do_financial 0: 실행여부, 1: 시작 index
     do_financial = [False, 0]
     # do_earnings 0: 실행여부, 1: 루프 num(MAX 2), 2: 시작 index
-    do_earnings = [True, 2, 0]
+    do_earnings = [False, 0, 0]
     # do_dividends 0: 실행여부, 1: 루프 num(MAX 2), 2: 시작 index
-    do_dividends = [True, 2, 0]
+    do_dividends = [False, 10, 0]
     # do_price_list 0: 실행여부, 1: API 사용여부, 2: Calendar 사용여부, 3: 시작 index, 4: Data 수신여부, 5: 비영업일 카피여부
     do_price_list = [False, True, True, 0, True, True]
 
-    do_background = True
-    loop_sleep_term = 0.3
+    do_background = False
+    loop_sleep_term = 1
     CrawlingData(index_nm_list, do_profile=do_profile, do_financial=do_financial, do_earnings=do_earnings, do_dividends=do_dividends, do_price_list=do_price_list, loop_sleep_term=loop_sleep_term, do_background=do_background)
     #CrawlingData(options, do_profile=False, do_financial=False, do_earnings=False, do_dividends=True, do_price_list=[False, False, False], loop_sleep_term=0)
     GenerateAdditionalData()
