@@ -39,10 +39,13 @@ def makeReturnData(pType = PRC_RETURN):
     return result.dropna()
 
 # Feature sequence 데이터를 생성한다.
+# shape(step, n) 사이즈의 DF를 sequential하게 연결한다.
 def makeFeatureSequence(data, step, n):
+    # 연결하기 위해서 axis를 한개 추가한다.
     seq = np.expand_dims(np.array(data.iloc[0:step, 0:n]), 0)
-    
-    for i in range(1, len(ds) - step + 1):
+
+    # 하루씩 shift해서 DF를 생성 후 append한다.
+    for i in range(1, len(data) - step + 1):
         x = np.expand_dims(np.array(data.iloc[i:(i+step), 0:n]), 0)
         seq = np.concatenate((seq, x))
     
@@ -60,4 +63,4 @@ print("\n# 학습용 데이터를 생성했습니다.")
 # Dataset을 로드하고, 확인해 본다.
 with open('data/2.price_return.pickle', 'rb') as f:
     x = pickle.load(f)
-      
+
