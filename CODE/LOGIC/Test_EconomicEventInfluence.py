@@ -12,6 +12,7 @@ from datetime import datetime
 from datetime import timedelta
 from datetime import date
 from itertools import count
+import math
 
 from COMM import DB_Util
 from COMM import CALC_Util
@@ -127,7 +128,7 @@ if 1:
                         sql_arg = (cd, nm, price_cd, str(curr_date), str(in_date), str(out_date), in_value, out_vlaue, diff, ratio, diff, ratio)
                         #print(sql % sql_arg)
 
-                        if (db.execute_query(sql, sql_arg) == False):
+                        if (db.execute_query(sql, sql_arg) == False and math.isnan(ratio) == False):
                             print(sql % sql_arg)
 
                         raw_result_body = raw_result_body + '\t' + str(ratio)
