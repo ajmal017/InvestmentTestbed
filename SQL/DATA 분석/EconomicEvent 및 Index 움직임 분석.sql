@@ -1,5 +1,6 @@
 
 SELECT a.event_nm, a.event_cd, e.nm_us AS index_nm, a.index_cd
+     , a.pos_cnt+b.neg_cnt+c.w_cnt+d.w_cnt AS cnt
      , FORMAT((a.pos_cnt+b.neg_cnt)/(a.pos_cnt+b.neg_cnt+c.w_cnt+d.w_cnt),4) AS pos_hit
 	  , FORMAT(c.w_cnt/(a.pos_cnt+b.neg_cnt+c.w_cnt+d.w_cnt),4) AS neg1_hit
 	  , FORMAT(d.w_cnt/(a.pos_cnt+b.neg_cnt+c.w_cnt+d.w_cnt),4) AS neg2_hit
@@ -31,4 +32,5 @@ SELECT a.event_nm, a.event_cd, e.nm_us AS index_nm, a.index_cd
    AND a.event_cd = d.event_cd
    AND a.index_cd = d.index_cd  
    AND a.index_cd = e.cd
+--   AND a.index_cd = 'KOSPI2'
   
