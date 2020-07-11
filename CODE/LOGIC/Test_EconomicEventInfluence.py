@@ -49,6 +49,7 @@ if 1:
     # Economic Event 리스트
     event_datas = db.select_query("select nm_us, cd, unit"
                                  "  from economic_events")
+                                 #" where cd = 75")
                                  #" where imp_us = 3"
                                  #"   and type = 'Ori'")
     event_datas.columns = ['nm', 'cd', 'unit']
@@ -73,7 +74,7 @@ if 1:
                                      " where pre_release_yn = 0"
                                      "   and event_cd = %s" % (cd))
         event_schedule_datas.columns = ['date', 'value']
-        event_schedule_datas["change"] = None
+        event_schedule_datas['change'] = None
         event_schedule_datas = event_schedule_datas.set_index('date')
 
 
@@ -122,13 +123,13 @@ if 1:
                             print('에러정보 : ', e, file=sys.stderr)
                             print(cd, nm, price_cd, curr_date, in_date, out_date)
 
-                        sql = "INSERT INTO economic_events_results (event_cd, event_nm, index_cd, event_date" \
+                        sql = "INSERT INTO economic_events_results (event_cd, index_cd, event_date" \
                               ", position_in_date, position_out_date, position_in_value, position_out_value, event_value_diff, index_value_ratio) " \
-                              "VALUES (%s, '%s', '%s', '%s', '%s', '%s', %s, %s, %s, %s) ON DUPLICATE KEY UPDATE event_value_diff = %s, index_value_ratio = %s"
-                        sql_arg = (cd, nm, price_cd, str(curr_date), str(in_date), str(out_date), in_value, out_vlaue, diff, ratio, diff, ratio)
+                              "VALUES (%s, '%s', '%s', '%s', '%s', %s, %s, %s, %s) ON DUPLICATE KEY UPDATE event_value_diff = %s, index_value_ratio = %s"
+                        sql_arg = (cd, price_cd, str(curr_date), str(in_date), str(out_date), in_value, out_vlaue, diff, ratio, diff, ratio)
                         #print(sql % sql_arg)
 
-                        if (db.execute_query(sql, sql_arg) == False and math.isnan(ratio) == False):
+                        if (db.execute_query(sql, sql_arg) == False and (math.isnan(ratio) == False and math.isinf(ratio) == False)):
                             print(sql % sql_arg)
 
                         raw_result_body = raw_result_body + '\t' + str(ratio)
