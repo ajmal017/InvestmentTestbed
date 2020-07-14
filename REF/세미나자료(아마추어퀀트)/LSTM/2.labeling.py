@@ -51,7 +51,7 @@ def optPortfolio(rv, W0, reg=100):
 # 마코비츠의 포트폴리오 최적화 결과 label을 생성한다.
 def labeling():
     # 종목 별 초기 weight : 균등분포
-    W0 = np.ones(len(ds[0][0])) * 1/len(ds[0][0])
+    W0 = np.ones(len(ds[0][0])) / len(ds[0][0])
     
     nErr = 0
     regC = 30   # regularization constant = 50 적용 (overfitting 방지용)
@@ -91,6 +91,7 @@ def traceLabel(y, n):
     plt.show()
 
 # label을 생성한다.
+# label은 포트폴리오에 들어가는 종목들의 Sharp Ratio를 최대화하는 Weight를 의미한다.
 label = labeling()
 
 # label을 저장해 둔다.

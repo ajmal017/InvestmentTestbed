@@ -83,7 +83,7 @@ if 1:
         for schedule_idx, schedule_data in enumerate(event_schedule_datas.iterrows()):
 
             curr_date = datetime.strptime(schedule_data[0], '%Y-%m-%d').date()
-            curr_value = schedule_data[1].value
+            curr_value = schedule_data[1]['value']
 
             # 변화율을 계산하기 위해서 2번째 데이터부터 사용
             # 변화율을 계산하기 위해서 마지막에서 2번째 데이터까지 사용
