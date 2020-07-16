@@ -22,7 +22,7 @@ from COMM import CALC_Util
 db = DB_Util.DB()
 db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", password="ryumaria")
 
-PRINT_OUT_RAW_DATA_TO_FILE = True
+PRINT_OUT_RAW_DATA_TO_FILE = False
 # Economic Event 변동별 가격지표들의 수익률 비교
 if 1:
 
@@ -58,7 +58,7 @@ if 1:
     raw_result_header = 'cd' + '\t' + 'nm' + '\t' + 'curr_date' + '\t' + 'diff' + '\t' + 'in_date' + '\t' + 'out_date'
     for pri_cd in pivoted_price_datas_close:
         raw_result_header = raw_result_header + '\t' + pri_cd
-    raw_result_file.write(raw_result_header + '\n')
+    #raw_result_file.write(raw_result_header + '\n')
 
 
     # 지수 데이터가 존재하는 기간 이후 발생한 Economic Event 사용
@@ -133,7 +133,7 @@ if 1:
                             print(sql % sql_arg)
 
                         raw_result_body = raw_result_body + '\t' + str(ratio)
-                    raw_result_file.write(raw_result_body + '\n')
+                    #raw_result_file.write(raw_result_body + '\n')
 
             prev_date = curr_date
             prev_value = curr_value
