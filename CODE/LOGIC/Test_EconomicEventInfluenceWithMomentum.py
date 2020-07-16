@@ -65,7 +65,7 @@ if 1:
     raw_result_header = 'cd' + '\t' + 'nm' + '\t' + 'curr_date' + '\t' + 'diff' + '\t' + 'in_date' + '\t' + 'out_date'
     for pri_cd in pivoted_price_datas_close:
         raw_result_header = raw_result_header + '\t' + pri_cd
-    raw_result_file.write(raw_result_header + '\n')
+    #raw_result_file.write(raw_result_header + '\n')
 
 
     for event in event_datas.iterrows():
@@ -163,7 +163,7 @@ if 1:
                         print(cd, nm, price_cd, curr_date, index_datas['in_date'][schedule_idx], index_datas['out_date'][schedule_idx])
 
                     raw_result_body = raw_result_body + '\t' + str(index_datas[price_cd+'in_value'][schedule_idx]) + '\t' + str(index_datas[price_cd+'out_value'][schedule_idx])
-                raw_result_file.write(raw_result_body + '\n')
+                #raw_result_file.write(raw_result_body + '\n')
 
 
         for price_idx, price_cd in enumerate(pivoted_price_datas_close):
@@ -200,7 +200,8 @@ if 1:
                 #print(sql % sql_arg)
 
                 if (db.execute_query(sql, sql_arg) == False):
-                    print(sql % sql_arg)
+                    #print(sql % sql_arg)
+                    pass
 
 
     if PRINT_OUT_RAW_DATA_TO_FILE:
