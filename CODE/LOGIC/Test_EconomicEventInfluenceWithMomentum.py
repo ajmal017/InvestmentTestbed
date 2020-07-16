@@ -23,7 +23,7 @@ from COMM import CALC_Util
 db = DB_Util.DB()
 db.connet(host="127.0.0.1", port=3306, database="investing.com", user="root", password="ryumaria")
 
-PRINT_OUT_RAW_DATA_TO_FILE = True
+PRINT_OUT_RAW_DATA_TO_FILE = False
 # Economic Event 변동별 가격지표들의 수익률 비교
 if 1:
 
@@ -207,21 +207,3 @@ if 1:
         raw_result_file.close()
 
 db.disconnect()
-
-"""
-CREATE TABLE `economic_events_results` (
-  `event_cd` int(4) NOT NULL,
-  `index_cd` varchar(8) NOT NULL,
-  `event_date` char(10) NOT NULL,
-  `position_in_date` char(10) DEFAULT NULL,
-  `position_out_date` char(10) DEFAULT NULL,
-  `in_value` float DEFAULT NULL,
-  `out_value` float DEFAULT NULL,
-  `value_diff` float DEFAULT NULL,
-  `prev_event` float DEFAULT NULL,
-  `curr_event` float DEFAULT NULL,
-  `event_diff` float DEFAULT NULL,
-  `direction` int(11) DEFAULT NULL,
-  PRIMARY KEY (`event_cd`,`index_cd`,`event_date`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8
-"""

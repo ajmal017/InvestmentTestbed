@@ -223,10 +223,10 @@ if __name__ == '__main__':
         CrawlHistoricalPrices(start_date)
 
     if 1:
-        t_gap = 0.1
-        loop_num = 0
+        t_gap = 0.2
+        loop_num = 20
         do_background = False
-        CrawlEconomicEventValues(t_gap, do_background=do_background)
+        CrawlEconomicEventValues(t_gap, do_background=do_background, loop_num=loop_num)
 
     # 당일 Economic Event 리스트 크롤링
     if 0:
